@@ -3,7 +3,7 @@ package com.flickrmap.flickrmap.controller.fragments;
 import android.app.Fragment;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.support.v17.leanback.widget.HorizontalGridView;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,7 +29,7 @@ import java.util.ArrayList;
 public class PhotoGalleryFragment extends Fragment {
 
 
-    private HorizontalGridView mGalleryView;
+    private RecyclerView mGalleryView;
     private ArrayList<AppPhotoBundle> mPhotosList;
 
     /**
@@ -70,7 +70,13 @@ public class PhotoGalleryFragment extends Fragment {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mGalleryView = (HorizontalGridView) view.findViewById(R.id.thumbs_gallery);
+        mGalleryView = (RecyclerView) view.findViewById(R.id.thumbs_gallery);
+        mGalleryView.setHasFixedSize(true);
+
+        // use a linear layout manager
+        LinearLayoutManager layoutManager =
+                new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, false);
+        mGalleryView.setLayoutManager(layoutManager);
         mGalleryView.addItemDecoration(new HorizontalSpaceDecorator(getResources().getInteger(R.integer.gallery_space_half_size)));
         mGalleryView.setAdapter(new PhotoGalleryAdapter());
 
@@ -128,6 +134,11 @@ public class PhotoGalleryFragment extends Fragment {
 
         }
 
+        @Override
+        public void onViewRecycled(GalleryViewHolder holder) {
+            holder.mImageView.setImageResource(0);
+            super.onViewRecycled(holder);
+        }
 
         @Override
         public int getItemCount() {
