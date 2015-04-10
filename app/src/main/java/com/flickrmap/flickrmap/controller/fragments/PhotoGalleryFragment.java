@@ -85,6 +85,7 @@ public class PhotoGalleryFragment extends Fragment {
     private class GalleryViewHolder extends RecyclerView.ViewHolder {
 
         protected final ImageView mImageView;
+        protected ImageRequest mImageRequest;
 
         public GalleryViewHolder(View itemView) {
             super(itemView);
@@ -116,7 +117,7 @@ public class PhotoGalleryFragment extends Fragment {
 
             if (photo != null) {
                 // Retrieves an image specified by the URL, displays it in the UI.
-                ImageRequest request = new ImageRequest(photo.getThumbnailUrl(),
+                holder.mImageRequest = new ImageRequest(photo.getThumbnailUrl(),
                         new Response.Listener<Bitmap>() {
                             @Override
                             public void onResponse(Bitmap bitmap) {
@@ -129,14 +130,15 @@ public class PhotoGalleryFragment extends Fragment {
                             }
                         });
                 VolleyWrapper.getInstance(getActivity())
-                        .addToRequestQueue(request);
+                        .addToRequestQueue(holder.mImageRequest);
             }
 
         }
 
         @Override
         public void onViewRecycled(GalleryViewHolder holder) {
-            holder.mImageView.setImageResource(0);
+            holder.mImageView.setImageBitmap(null);
+            holder.mImageRequest.cancel();
             super.onViewRecycled(holder);
         }
 
