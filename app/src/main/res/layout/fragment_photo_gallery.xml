@@ -1,0 +1,15 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:tools="http://schemas.android.com/tools"
+             android:layout_width="match_parent"
+             android:layout_height="@dimen/gallery_height"
+             android:layout_gravity="bottom"
+             tools:context="com.flickrmap.flickrmap.controller.fragments.PhotoGalleryFragment">
+
+    <android.support.v17.leanback.widget.HorizontalGridView
+        android:id="@+id/thumbs_gallery"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+    </android.support.v17.leanback.widget.HorizontalGridView>
+
+</FrameLayout>
