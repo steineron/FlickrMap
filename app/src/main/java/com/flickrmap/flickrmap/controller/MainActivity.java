@@ -16,7 +16,12 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.googlecode.flickrjandroid.photos.PhotoList;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.googlecode.flickrjandroid.photos.GeoData;
+import com.googlecode.flickrjandroid.photos.Photo;
+
+import java.util.ArrayList;
 
 
 public class MainActivity extends ActionBarActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMyLocationButtonClickListener, GetPhotosService.OnPhotosResultListener {
@@ -121,16 +126,28 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
         return false;
     }
 
-    private void populatePhotosOnMap(PhotoList photos) {
+    private void populatePhotosOnMap(ArrayList<Photo> photos) {
 
         // remove all markers
 
         // re-populate makers
 
+        for (Photo photo : photos) {
+            try {
+                GeoData geoData = photo.getGeoData();
+                LatLng position = new LatLng(geoData.getLatitude(), geoData.getLongitude());
+                MarkerOptions makerOptions = new MarkerOptions().position(position);
+                mMapFragment.getMap()
+                        .addMarker(makerOptions);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
     @Override
-    public void onPhotosResult(Context context, PhotoList photos) {
+    public void onPhotosResult(Context context, ArrayList<Photo> photos) {
         populatePhotosOnMap(photos);
     }
 

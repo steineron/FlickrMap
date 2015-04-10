@@ -3,7 +3,10 @@ package com.flickrmap.flickrmap.model.parcelables;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.googlecode.flickrjandroid.photos.Photo;
 import com.googlecode.flickrjandroid.photos.PhotoList;
+
+import java.util.ArrayList;
 
 /**
  * Created by ron on 4/10/15.
@@ -11,7 +14,7 @@ import com.googlecode.flickrjandroid.photos.PhotoList;
 public class FlickrPhotosListWrapper implements Parcelable {
 
 
-    PhotoList mPhotoList;
+    ArrayList<Photo> mPhotoList;
 
     public FlickrPhotosListWrapper(PhotoList mPhotoList) {
         this.mPhotoList = mPhotoList;
@@ -20,10 +23,10 @@ public class FlickrPhotosListWrapper implements Parcelable {
     protected FlickrPhotosListWrapper(Parcel in) {
         mPhotoList = in.readByte() == 0x00 ?
                      null :
-                     (PhotoList) in.readValue(PhotoList.class.getClassLoader());
+                     (ArrayList<Photo>) in.readValue(PhotoList.class.getClassLoader());
     }
 
-    public PhotoList getPhotoList() {
+    public ArrayList<Photo> getPhotoList() {
         return mPhotoList;
     }
 
