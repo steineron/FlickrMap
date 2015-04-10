@@ -4,4 +4,5 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="gallery_height">120dp</dimen>
     <dimen name="gallery_thumb_size">100dp</dimen>
+    <dimen name="gallery_thumb_padding">8dp</dimen>
 </resources>

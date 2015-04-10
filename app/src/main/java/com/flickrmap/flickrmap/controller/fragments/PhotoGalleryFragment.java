@@ -16,6 +16,7 @@ import com.android.volley.toolbox.ImageRequest;
 import com.flickrmap.flickrmap.R;
 import com.flickrmap.flickrmap.controller.AppPhotoBundle;
 import com.flickrmap.flickrmap.model.VolleyWrapper;
+import com.flickrmap.flickrmap.view.HorizontalSpaceDecorator;
 
 import java.util.ArrayList;
 
@@ -70,14 +71,18 @@ public class PhotoGalleryFragment extends Fragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mGalleryView = (HorizontalGridView) view.findViewById(R.id.thumbs_gallery);
+        mGalleryView.addItemDecoration(new HorizontalSpaceDecorator(getResources().getInteger(R.integer.gallery_space_half_size)));
         mGalleryView.setAdapter(new PhotoGalleryAdapter());
 
     }
 
     private class GalleryViewHolder extends RecyclerView.ViewHolder {
 
+        protected final ImageView mImageView;
+
         public GalleryViewHolder(View itemView) {
             super(itemView);
+            mImageView = (ImageView) itemView.findViewById(R.id.thumb_image);
         }
     }
 
@@ -93,7 +98,7 @@ public class PhotoGalleryFragment extends Fragment {
         }
 
         @Override
-        public void onBindViewHolder(GalleryViewHolder holder, int position) {
+        public void onBindViewHolder(final GalleryViewHolder holder, int position) {
 
 
             AppPhotoBundle photo = null;
@@ -105,17 +110,16 @@ public class PhotoGalleryFragment extends Fragment {
 
             if (photo != null) {
                 // Retrieves an image specified by the URL, displays it in the UI.
-                final ImageView imageView = (ImageView) holder.itemView;
                 ImageRequest request = new ImageRequest(photo.getThumbnailUrl(),
                         new Response.Listener<Bitmap>() {
                             @Override
                             public void onResponse(Bitmap bitmap) {
-                                imageView.setImageBitmap(bitmap);
+                                holder.mImageView.setImageBitmap(bitmap);
                             }
                         }, 0, 0, ImageView.ScaleType.CENTER_CROP, null,
                         new Response.ErrorListener() {
                             public void onErrorResponse(VolleyError error) {
-                                imageView.setImageResource(/*R.drawable.image_load_error*/ 0);
+                                holder.mImageView.setImageResource(/*R.drawable.image_load_error*/ 0);
                             }
                         });
                 VolleyWrapper.getInstance(getActivity())
