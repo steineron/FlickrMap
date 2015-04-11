@@ -10,6 +10,8 @@
         android:id="@+id/thumbs_gallery"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:focusable="true"
+        android:clickable="true"
         android:background="@color/gallery_thumb_background">
 
     </android.support.v7.widget.RecyclerView>

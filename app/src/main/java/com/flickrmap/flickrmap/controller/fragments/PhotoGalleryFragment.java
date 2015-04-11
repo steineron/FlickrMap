@@ -20,6 +20,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageRequest;
 import com.flickrmap.flickrmap.R;
 import com.flickrmap.flickrmap.controller.AppPhotoDetails;
+import com.flickrmap.flickrmap.controller.AppPhotoDetailsIntent;
 import com.flickrmap.flickrmap.model.VolleyWrapper;
 import com.flickrmap.flickrmap.view.HorizontalSpaceDecorator;
 
@@ -119,51 +120,54 @@ public class PhotoGalleryFragment extends Fragment {
         @Override
         public void onBindViewHolder(final GalleryViewHolder holder, int position) {
 
-            AppPhotoDetails photo = null;
             try {
-                photo = mPhotosList.get(position);
-            } catch (Exception e) {
-                photo = null;
-            }
-            holder.mImageView.setBackground(/*R.drawable.image_load_error*/ null);
-            holder.mImageView.setVisibility(View.INVISIBLE);
-            if (photo != null) {
-                // Retrieves an image specified by the URL, displays it in the UI.
-                holder.mImageRequest = new ImageRequest(photo.getThumbnailUrl(),
-                        new Response.Listener<Bitmap>() {
+                final AppPhotoDetails photo = mPhotosList.get(position);
 
-                            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-                            @Override
-                            public void onResponse(Bitmap bitmap) {
+                holder.mImageView.setImageBitmap(/*R.drawable.image_load_error*/ null);
+                holder.mImageView.setVisibility(View.INVISIBLE);
+                if (photo != null) {
+                    // Retrieves an image specified by the URL, displays it in the UI.
+                    holder.mImageRequest = new ImageRequest(photo.getThumbnailUrl(),
+                            new Response.Listener<Bitmap>() {
 
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
-                                        holder.mImageView.isAttachedToWindow()) {
-                                    revealView(holder.mImageView);
+                                @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+                                @Override
+                                public void onResponse(Bitmap bitmap) {
+
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
+                                            holder.mImageView.isAttachedToWindow()) {
+                                        revealView(holder.mImageView);
+                                    }
+                                    holder.mImageView.setImageBitmap(bitmap);
+                                    holder.mImageView.setVisibility(View.VISIBLE);
                                 }
-                                holder.mImageView.setImageBitmap(bitmap);
-                                holder.mImageView.setVisibility(View.VISIBLE);
-                            }
 
-                        }, 0, 0, ImageView.ScaleType.CENTER_CROP, null,
-                        new Response.ErrorListener() {
+                            }, 0, 0, ImageView.ScaleType.CENTER_CROP, null,
+                            new Response.ErrorListener() {
 
-                            public void onErrorResponse(VolleyError error) {
+                                public void onErrorResponse(VolleyError error) {
 
-                                //TODO: handle the error properly
-                                holder.mImageView.setImageBitmap(/*R.drawable.image_load_error*/ null);
-                            }
-                        });
-                // launch the request
-                VolleyWrapper.getInstance(getActivity())
-                        .addToRequestQueue(holder.mImageRequest);
-                holder.itemView.setOnClickListener(new View.OnClickListener() {
+                                    //TODO: handle the error properly
+                                    holder.mImageView.setImageBitmap(/*R.drawable.image_load_error*/ null);
+                                }
+                            });
+                    // launch the request
+                    VolleyWrapper.getInstance(getActivity())
+                            .addToRequestQueue(holder.mImageRequest);
+                    holder.mImageView.setOnClickListener(new View.OnClickListener() {
 
-                    @Override
-                    public void onClick(final View v) {
+                        @Override
+                        public void onClick(final View v) {
 
-                    }
-                });
+                            getActivity().sendBroadcast(AppPhotoDetailsIntent
+                                    .createDisplayAppPhotoIntent(getActivity(), photo));
+                        }
+                    });
+                }
+            } catch (Exception e) {
+
             }
+            AppPhotoDetails photo = null;
 
         }
 

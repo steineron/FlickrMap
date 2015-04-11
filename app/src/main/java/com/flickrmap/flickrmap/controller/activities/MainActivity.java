@@ -20,7 +20,9 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageRequest;
 import com.flickrmap.flickrmap.R;
 import com.flickrmap.flickrmap.controller.AppPhotoDetails;
+import com.flickrmap.flickrmap.controller.AppPhotoDetailsIntent;
 import com.flickrmap.flickrmap.controller.fragments.PhotoGalleryFragment;
+import com.flickrmap.flickrmap.controller.fragments.PhotosMapFragment;
 import com.flickrmap.flickrmap.model.GetPhotosService;
 import com.flickrmap.flickrmap.model.VolleyWrapper;
 import com.google.android.gms.common.ConnectionResult;
@@ -42,7 +44,7 @@ import java.util.HashMap;
 import auto.parcel.AutoParcel;
 
 
-public class MainActivity extends ActionBarActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMyLocationButtonClickListener, GetPhotosService.OnPhotosResultListener {
+public class MainActivity extends ActionBarActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMyLocationButtonClickListener, GetPhotosService.OnPhotosResultListener, AppPhotoDetailsIntent.OnDisplayAppPhotoListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -58,6 +60,8 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
     private PhotoGalleryFragment mPhotoGalleryFragment;
 
+    private BroadcastReceiver mDisplayAppPhotoReceiver;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -67,7 +71,7 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
             // add the map fragment, load the map.
             // connect the api-client
             // once the client connects  - start loading the photos for the current location.
-            mMapFragment = new MapFragment();
+            mMapFragment = new PhotosMapFragment();
             getFragmentManager().beginTransaction()
                     .add(R.id.container, mMapFragment)
                     .commit();
@@ -91,6 +95,9 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
         // register a listener to handle retrieval of photos
         mPhotosResultsReceiver = GetPhotosService.registerOnPhotosResultListener(this, this);
+        mDisplayAppPhotoReceiver =
+                AppPhotoDetailsIntent.registerDisplayAppPhotoListener(this, this);
+
     }
 
     @Override
@@ -98,6 +105,11 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
         super.onPause();
         mGoogleApiClient.disconnect();
+        try {
+            unregisterReceiver(mDisplayAppPhotoReceiver);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         try {
             unregisterReceiver(mPhotosResultsReceiver);
         } catch (Exception e) {
@@ -146,20 +158,31 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
     public void onConnected(Bundle bundle) {
         // hte google api client is connected - get current location and zoom to it
 
+
+        zoomToLocation(getCurrentLocation());
+        // now retrieve phot's details for this location
+        retrievePhotosForLocation(getCurrentLocation());
+    }
+
+    private void zoomToLocation(final Location location) {
+
+        zoomToLocation(new LatLng(
+                location.getLatitude(),
+                location.getLongitude()));
+    }
+
+    private void zoomToLocation(final LatLng latLng) {
+
         GoogleMap googleMap = mMapFragment == null ?
                               null :
                               mMapFragment.getMap();
         if (googleMap != null) {
-            // Move the camera instantly to hamburg with a zoom of 15.
-            Location currentLocation = getCurrentLocation();
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), INITIAL_ZOOM));
+            // Move the camera instantly tolocation with a zoom of 15.
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, INITIAL_ZOOM + 1));
 
             // Zoom in, animating the camera.
-            googleMap.animateCamera(CameraUpdateFactory.zoomTo(INITIAL_ZOOM), 2000, null);
-
+            googleMap.animateCamera(CameraUpdateFactory.zoomTo(INITIAL_ZOOM), 1000, null);
         }
-        // now retrieve phot's details for this location
-        retrievePhotosForLocation(getCurrentLocation());
     }
 
     @Override
@@ -207,7 +230,7 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
                 Marker marker = mMapFragment.getMap()
                         .addMarker(makerOptions);
                 String markerId = marker.getId();
-                AppPhotoDetails appPhotoDetails = createAppPhotoDetails(markerId, photo);
+                AppPhotoDetails appPhotoDetails = createAppPhotoDetails(marker, photo);
                 Log.v(TAG, "adding marker for: " + appPhotoDetails.toString() + " at: " +
                         position.toString());
 
@@ -221,9 +244,10 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
     }
 
-    private AppPhotoDetails createAppPhotoDetails(String markerId, Photo photo) {
+    private AppPhotoDetails createAppPhotoDetails(Marker marker, Photo photo) {
 
-        return AppPhotoDetailsImpl.create(markerId,
+        return AppPhotoDetailsImpl.create(marker.getId(),
+                marker,
                 photo.getSmallSquareUrl(), // should be 75x75
                 photo.getMediumUrl(),
                 photo.getTitle(),
@@ -257,16 +281,32 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
     }
 
+    @Override
+    public void onDisplayAppPhoto(final AppPhotoDetails photoDetails) {
+
+        if (photoDetails != null && mAppPhotosMap != null) {
+            AppPhotoDetailsImpl detailsImpl =
+                    (AppPhotoDetailsImpl) mAppPhotosMap.get(photoDetails.getId());
+            Marker mapMarker = detailsImpl.getMapMarker();
+            if (mapMarker != null) {
+                mapMarker.showInfoWindow();
+                zoomToLocation(mapMarker.getPosition());
+            }
+        }
+    }
+
     /**
      * {@link AppPhotoDetailsImpl} - an internal implementation for the {@link AppPhotoDetails} interface
      * the current activity creates and manages instances of this class.
-     * each instance is coupled to a maker on the map (using {@link Marker:getId})
-     * the mapping takes place via {@value MainActivity:mAppPhotosMap}     *
+     * each instance is coupled to a maker on the map and mapped using {@link Marker:getId}.
+     * the mapping takes place via {@value MainActivity:mAppPhotosMap}
      */
     @AutoParcel
     static abstract class AppPhotoDetailsImpl implements AppPhotoDetails {
 
-        private Bitmap mLargeBitmap;
+        Bitmap mLargeBitmap;
+
+        Marker mMarker;
 
         public Bitmap getLargeBitmap() {
 
@@ -278,14 +318,29 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
             mLargeBitmap = largeBitmap;
         }
 
+        public void setMarker(final Marker marker) {
+
+            mMarker = marker;
+        }
+
+        Marker getMapMarker() {
+
+            return mMarker;
+        }
+
         static AppPhotoDetailsImpl create(
-                @Nullable String markerId,
+                String markerId,
+                Marker mapMarker,
                 @Nullable String thumbnailUrl,
                 @Nullable String largeUrl,
                 @Nullable String title,
-                @Nullable String description) {
+                @Nullable String description
+                                         ) {
 
-            return new AutoParcel_MainActivity_AppPhotoDetailsImpl(markerId, thumbnailUrl, largeUrl, title, description);
+            AutoParcel_MainActivity_AppPhotoDetailsImpl details =
+                    new AutoParcel_MainActivity_AppPhotoDetailsImpl(markerId, thumbnailUrl, largeUrl, title, description);
+            details.setMarker(mapMarker);
+            return details;
         }
     }
 
