@@ -2,18 +2,27 @@ package com.flickrmap.flickrmap.controller.activities;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageRequest;
 import com.flickrmap.flickrmap.R;
 import com.flickrmap.flickrmap.controller.AppPhotoDetails;
 import com.flickrmap.flickrmap.controller.fragments.PhotoGalleryFragment;
 import com.flickrmap.flickrmap.model.GetPhotosService;
+import com.flickrmap.flickrmap.model.VolleyWrapper;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -124,6 +133,7 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
         googleMap.setMyLocationEnabled(true);
         googleMap.setOnMyLocationButtonClickListener(this);
+        googleMap.setInfoWindowAdapter(new PhotoDetailsWindowAdapter());
 
     }
 
@@ -193,13 +203,11 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
                 GeoData geoData = photo.getGeoData();
                 LatLng position = new LatLng(geoData.getLatitude(), geoData.getLongitude());
                 MarkerOptions makerOptions = new MarkerOptions()
-                        .position(position)
-                        .title(String.valueOf(++n))
-                        .snippet(photo.getDescription());
+                        .position(position);
                 Marker marker = mMapFragment.getMap()
                         .addMarker(makerOptions);
                 String markerId = marker.getId();
-                AppPhotoDetails appPhotoDetails = createAppPhotoBundle(markerId, photo);
+                AppPhotoDetails appPhotoDetails = createAppPhotoDetails(markerId, photo);
                 Log.v(TAG, "adding marker for: " + appPhotoDetails.toString() + " at: " +
                         position.toString());
 
@@ -213,11 +221,11 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
     }
 
-    private AppPhotoDetails createAppPhotoBundle(String markerId, Photo photo) {
+    private AppPhotoDetails createAppPhotoDetails(String markerId, Photo photo) {
 
         return AppPhotoDetailsImpl.create(markerId,
-                photo.getLargeUrl(),
                 photo.getSmallSquareUrl(), // should be 75x75
+                photo.getMediumUrl(),
                 photo.getTitle(),
                 photo.getDescription());
     }
@@ -250,7 +258,7 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
     }
 
     /**
-     * {@link AppPhotoDetailsImpl} - an internal implementation for the {@link AppPhotoDetails}
+     * {@link AppPhotoDetailsImpl} - an internal implementation for the {@link AppPhotoDetails} interface
      * the current activity creates and manages instances of this class.
      * each instance is coupled to a maker on the map (using {@link Marker:getId})
      * the mapping takes place via {@value MainActivity:mAppPhotosMap}     *
@@ -258,14 +266,94 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
     @AutoParcel
     static abstract class AppPhotoDetailsImpl implements AppPhotoDetails {
 
+        private Bitmap mLargeBitmap;
+
+        public Bitmap getLargeBitmap() {
+
+            return mLargeBitmap;
+        }
+
+        public void setLargeBitmap(@Nullable Bitmap largeBitmap) {
+
+            mLargeBitmap = largeBitmap;
+        }
+
         static AppPhotoDetailsImpl create(
                 @Nullable String markerId,
-                @Nullable String largeUrl,
                 @Nullable String thumbnailUrl,
+                @Nullable String largeUrl,
                 @Nullable String title,
                 @Nullable String description) {
 
-            return new AutoParcel_MainActivity_AppPhotoDetailsImpl(markerId, largeUrl, thumbnailUrl, title, description);
+            return new AutoParcel_MainActivity_AppPhotoDetailsImpl(markerId, thumbnailUrl, largeUrl, title, description);
+        }
+    }
+
+    /**
+     * {@link PhotoDetailsWindowAdapter} runs the adapter to match a marker on the map with a custom-info view
+     */
+    private class PhotoDetailsWindowAdapter implements GoogleMap.InfoWindowAdapter {
+
+        @Override
+        public View getInfoWindow(Marker marker) {
+
+            return null; // default buble-style
+        }
+
+        @Override
+        public View getInfoContents(Marker marker) {
+
+            final AppPhotoDetailsImpl photo =
+                    (AppPhotoDetailsImpl) mAppPhotosMap.get(marker.getId());
+            View view = null;
+
+            if (photo != null && photo.getLargeBitmap() != null) {
+                view = LayoutInflater.from(MainActivity.this)
+                        .inflate(R.layout.marker_info_window, null, false);
+                final ImageView imageView = (ImageView) view.findViewById(R.id.info_window_image);
+                imageView.setImageBitmap(photo.getLargeBitmap());
+                final TextView textView = (TextView) view.findViewById(R.id.info_window_text);
+                final String title = photo.getTitle();
+                if (title != null) {
+                    textView.setText(title);
+                }
+                else {
+                    textView.setVisibility(View.GONE);
+                }
+            }
+            else {
+
+                getImageForViewAndRefresh(marker, photo);
+            }
+            return view;
+        }
+
+        private ImageRequest getImageForViewAndRefresh(final Marker marker,
+                                                       final AppPhotoDetailsImpl photo) {
+
+            ImageRequest imageRequest = new ImageRequest(photo.getLargeSizeUrl(),
+                    new Response.Listener<Bitmap>() {
+
+                        @Override
+                        public void onResponse(Bitmap bitmap) {
+
+                            photo.setLargeBitmap(bitmap);
+                            marker.showInfoWindow();
+                        }
+
+                    }, 0, 0, ImageView.ScaleType.CENTER_CROP, null,
+                    new Response.ErrorListener() {
+
+                        public void onErrorResponse(VolleyError error) {
+
+                            //TODO: handle the error properly - display error image
+                        }
+                    });
+            // launch the request
+            VolleyWrapper.getInstance(MainActivity.this)
+                    .addToRequestQueue(imageRequest);
+            return imageRequest;
+
         }
     }
 }

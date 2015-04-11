@@ -5,4 +5,5 @@
     <dimen name="gallery_height">106dp</dimen>
     <dimen name="gallery_thumb_size">75dp</dimen>
     <dimen name="gallery_thumb_padding">8dp</dimen>
+    <dimen name="info_window_image_size">140dp</dimen>
 </resources>
