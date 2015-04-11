@@ -172,7 +172,7 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
     private AppPhotoBundle createAppPhotoBundle(String markerId, Photo photo) {
         return AppPhotoBundleImpl.create(markerId,
                 photo.getLargeUrl(),
-                photo.getThumbnailUrl(),
+                photo.getSmallSquareUrl(), // should be 75x75
                 photo.getTitle(),
                 photo.getDescription());
     }

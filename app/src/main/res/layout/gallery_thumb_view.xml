@@ -2,8 +2,9 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
              android:layout_width="@dimen/gallery_thumb_size"
              android:layout_height="@dimen/gallery_thumb_size"
-             android:background="@color/gallery_thumb_background"
              android:padding="@dimen/gallery_thumb_padding"
+             android:focusable="true"
+             android:clickable="true"
     >
 
     <ImageView
@@ -11,7 +12,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
+        android:background="?android:selectableItemBackground"
+        android:focusable="true"
+        android:clickable="true"
+        android:elevation="8dp"
         >
-
     </ImageView>
 </FrameLayout>

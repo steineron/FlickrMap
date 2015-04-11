@@ -9,7 +9,8 @@
     <android.support.v7.widget.RecyclerView
         android:id="@+id/thumbs_gallery"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@color/gallery_thumb_background">
 
     </android.support.v7.widget.RecyclerView>
     <!--</android.support.v17.leanback.widget.HorizontalGridView>-->

@@ -15,6 +15,7 @@ import java.util.HashSet;
  * Created by ron on 4/9/15.
  */
 class FlickrGeoSearchTask extends AsyncTask<Bundle, Void, PhotoList> {
+
     private static final java.lang.String FLICKER_API_KEY = "c58fa329327dc0bd3b0bb1b3954b5a37";
 
     private static HashSet<String> mPhotoExtras;
@@ -53,6 +54,7 @@ class FlickrGeoSearchTask extends AsyncTask<Bundle, Void, PhotoList> {
                 PhotosInterface photosInterface = flickr.getPhotosInterface();
 
                 photos = photosInterface.search(getSearchParameters(searchLocation), maxResults, 1);
+
             } catch (Exception e) {
                 e.printStackTrace();
                 photos = null;
@@ -63,6 +65,7 @@ class FlickrGeoSearchTask extends AsyncTask<Bundle, Void, PhotoList> {
     }
 
     private SearchParameters getSearchParameters(Location searchLocation) {
+
         SearchParameters searchParameters = new SearchParameters();
         searchParameters.setLongitude(String.valueOf(searchLocation.getLongitude()));
         searchParameters.setLatitude(String.valueOf(searchLocation.getLatitude()));
