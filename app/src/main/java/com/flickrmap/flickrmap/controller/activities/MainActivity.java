@@ -331,27 +331,30 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
         private ImageRequest getImageForViewAndRefresh(final Marker marker,
                                                        final AppPhotoDetailsImpl photo) {
 
-            ImageRequest imageRequest = new ImageRequest(photo.getLargeSizeUrl(),
-                    new Response.Listener<Bitmap>() {
+            ImageRequest imageRequest = null;
+            if (photo != null) {
+                imageRequest = new ImageRequest(photo.getLargeSizeUrl(),
+                        new Response.Listener<Bitmap>() {
 
-                        @Override
-                        public void onResponse(Bitmap bitmap) {
+                            @Override
+                            public void onResponse(Bitmap bitmap) {
 
-                            photo.setLargeBitmap(bitmap);
-                            marker.showInfoWindow();
-                        }
+                                photo.setLargeBitmap(bitmap);
+                                marker.showInfoWindow();
+                            }
 
-                    }, 0, 0, ImageView.ScaleType.CENTER_CROP, null,
-                    new Response.ErrorListener() {
+                        }, 0, 0, ImageView.ScaleType.CENTER_CROP, null,
+                        new Response.ErrorListener() {
 
-                        public void onErrorResponse(VolleyError error) {
+                            public void onErrorResponse(VolleyError error) {
 
-                            //TODO: handle the error properly - display error image
-                        }
-                    });
-            // launch the request
-            VolleyWrapper.getInstance(MainActivity.this)
-                    .addToRequestQueue(imageRequest);
+                                //TODO: handle the error properly - display error image
+                            }
+                        });
+                // launch the request
+                VolleyWrapper.getInstance(MainActivity.this)
+                        .addToRequestQueue(imageRequest);
+            }
             return imageRequest;
 
         }

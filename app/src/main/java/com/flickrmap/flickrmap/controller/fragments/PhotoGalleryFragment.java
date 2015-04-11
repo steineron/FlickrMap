@@ -156,6 +156,13 @@ public class PhotoGalleryFragment extends Fragment {
                 // launch the request
                 VolleyWrapper.getInstance(getActivity())
                         .addToRequestQueue(holder.mImageRequest);
+                holder.itemView.setOnClickListener(new View.OnClickListener() {
+
+                    @Override
+                    public void onClick(final View v) {
+
+                    }
+                });
             }
 
         }
@@ -175,6 +182,7 @@ public class PhotoGalleryFragment extends Fragment {
                    0 :
                    mPhotosList.size();
         }
+
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
