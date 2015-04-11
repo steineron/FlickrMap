@@ -147,9 +147,10 @@ public class PhotoGalleryFragment extends Fragment {
                                     Animator reveal = ViewAnimationUtils.createCircularReveal(
                                             holder.mImageView,           // The  View to reveal
                                             Math.round(
-                                                    radius * 0.5f),      // x to start the mask from
+                                                    radius *
+                                                            0.5f),      // x to start the mask from - start from the middle
                                             Math.round(
-                                                    radius * 0.5f),      // y to start the mask from
+                                                    radius),      // y to start the mask from - start from the bottom
                                             0f,                          // radius of the starting mask
                                             radius);                     // radius of the final mask
                                     reveal.setDuration(150L)
