@@ -11,7 +11,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.flickrmap.flickrmap.R;
-import com.flickrmap.flickrmap.controller.AppPhotoBundle;
+import com.flickrmap.flickrmap.controller.AppPhotoDetails;
 import com.flickrmap.flickrmap.controller.fragments.PhotoGalleryFragment;
 import com.flickrmap.flickrmap.model.GetPhotosService;
 import com.google.android.gms.common.ConnectionResult;
@@ -45,7 +45,7 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
     private BroadcastReceiver mPhotosResultsReceiver;
 
-    private HashMap<String, AppPhotoBundle> mAppPhotosMap;
+    private HashMap<String, AppPhotoDetails> mAppPhotosMap;
 
     private PhotoGalleryFragment mPhotoGalleryFragment;
 
@@ -55,6 +55,9 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         if (savedInstanceState == null) {
+            // add the map fragment, load the map.
+            // connect the api-client
+            // once the client connects  - start loading the photos for the current location.
             mMapFragment = new MapFragment();
             getFragmentManager().beginTransaction()
                     .add(R.id.container, mMapFragment)
@@ -76,6 +79,8 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
         super.onResume();
         mGoogleApiClient.connect();
+
+        // register a listener to handle retrieval of photos
         mPhotosResultsReceiver = GetPhotosService.registerOnPhotosResultListener(this, this);
     }
 
@@ -142,9 +147,9 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
             // Zoom in, animating the camera.
             googleMap.animateCamera(CameraUpdateFactory.zoomTo(INITIAL_ZOOM), 2000, null);
 
-            retrievePhotosForLocation(getCurrentLocation());
         }
-
+        // now retrieve phot's details for this location
+        retrievePhotosForLocation(getCurrentLocation());
     }
 
     @Override
@@ -181,7 +186,7 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
         // re-populate makers
 
-        mAppPhotosMap = new HashMap<String, AppPhotoBundle>();
+        mAppPhotosMap = new HashMap<String, AppPhotoDetails>(); // will clear older references
         int n = 0;
         for (Photo photo : photos) {
             try {
@@ -194,11 +199,12 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
                 Marker marker = mMapFragment.getMap()
                         .addMarker(makerOptions);
                 String markerId = marker.getId();
-                AppPhotoBundle appPhotoBundle = createAppPhotoBundle(markerId, photo);
-                Log.v(TAG, "adding marker for: " + appPhotoBundle.toString() + " at: " +
+                AppPhotoDetails appPhotoDetails = createAppPhotoBundle(markerId, photo);
+                Log.v(TAG, "adding marker for: " + appPhotoDetails.toString() + " at: " +
                         position.toString());
 
-                mAppPhotosMap.put(markerId, appPhotoBundle);
+                // keep a mapping from marker to photo-bundle so events identified by the marker's id can be related to a photo's details
+                mAppPhotosMap.put(markerId, appPhotoDetails);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -207,9 +213,9 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
     }
 
-    private AppPhotoBundle createAppPhotoBundle(String markerId, Photo photo) {
+    private AppPhotoDetails createAppPhotoBundle(String markerId, Photo photo) {
 
-        return AppPhotoBundleImpl.create(markerId,
+        return AppPhotoDetailsImpl.create(markerId,
                 photo.getLargeUrl(),
                 photo.getSmallSquareUrl(), // should be 75x75
                 photo.getTitle(),
@@ -225,16 +231,16 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
     private void populateThumbsGallery() {
 
-        ArrayList<AppPhotoBundle> appPhotoBundles =
-                new ArrayList<AppPhotoBundle>(mAppPhotosMap.values());
+        ArrayList<AppPhotoDetails> listAppPhotoDetails =
+                new ArrayList<AppPhotoDetails>(mAppPhotosMap.values());
         if (mPhotoGalleryFragment == null) {
-            mPhotoGalleryFragment = PhotoGalleryFragment.newInstance(appPhotoBundles);
+            mPhotoGalleryFragment = PhotoGalleryFragment.newInstance(listAppPhotoDetails);
             getFragmentManager().beginTransaction()
                     .add(R.id.container, mPhotoGalleryFragment)
                     .commit();
         }
         else {
-            mPhotoGalleryFragment.setPhotosList(appPhotoBundles);
+            mPhotoGalleryFragment.setPhotosList(listAppPhotoDetails);
         }
     }
 
@@ -243,17 +249,23 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
     }
 
+    /**
+     * {@link AppPhotoDetailsImpl} - an internal implementation for the {@link AppPhotoDetails}
+     * the current activity creates and manages instances of this class.
+     * each instance is coupled to a maker on the map (using {@link Marker:getId})
+     * the mapping takes place via {@value MainActivity:mAppPhotosMap}     *
+     */
     @AutoParcel
-    static abstract class AppPhotoBundleImpl implements AppPhotoBundle {
+    static abstract class AppPhotoDetailsImpl implements AppPhotoDetails {
 
-        static AppPhotoBundleImpl create(
+        static AppPhotoDetailsImpl create(
                 @Nullable String markerId,
                 @Nullable String largeUrl,
                 @Nullable String thumbnailUrl,
                 @Nullable String title,
                 @Nullable String description) {
 
-            return new AutoParcel_MainActivity_AppPhotoBundleImpl(markerId, largeUrl, thumbnailUrl, title, description);
+            return new AutoParcel_MainActivity_AppPhotoDetailsImpl(markerId, largeUrl, thumbnailUrl, title, description);
         }
     }
 }

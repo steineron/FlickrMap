@@ -5,8 +5,12 @@ import android.support.annotation.Nullable;
 
 /**
  * Created by ron on 4/10/15.
+ *
+ * an interface for encapsulation of details for one photo in hte application
+ * the interface extends {@link android.os.Parcelable}, which makes it simple to wrap it in a {@link android.os.Bundle}
  */
-public interface AppPhotoBundle extends Parcelable {
+
+public interface AppPhotoDetails extends Parcelable {
 
     String getId();
 

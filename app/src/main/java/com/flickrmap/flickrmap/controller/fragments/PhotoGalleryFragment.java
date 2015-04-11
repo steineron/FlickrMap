@@ -19,7 +19,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageRequest;
 import com.flickrmap.flickrmap.R;
-import com.flickrmap.flickrmap.controller.AppPhotoBundle;
+import com.flickrmap.flickrmap.controller.AppPhotoDetails;
 import com.flickrmap.flickrmap.model.VolleyWrapper;
 import com.flickrmap.flickrmap.view.HorizontalSpaceDecorator;
 
@@ -36,23 +36,23 @@ public class PhotoGalleryFragment extends Fragment {
 
     private RecyclerView mGalleryView;
 
-    private ArrayList<AppPhotoBundle> mPhotosList;
+    private ArrayList<AppPhotoDetails> mPhotosList;
 
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @param photos - an array list of {@link AppPhotoBundle} that owns the details about the photos this gallery fragment displays
+     * @param photos - an array list of {@link com.flickrmap.flickrmap.controller.AppPhotoDetails} that owns the details about the photos this gallery fragment displays
      * @return A new instance of fragment PhotoGalleryFragment.
      */
-    public static PhotoGalleryFragment newInstance(ArrayList<AppPhotoBundle> photos) {
+    public static PhotoGalleryFragment newInstance(ArrayList<AppPhotoDetails> photos) {
 
         PhotoGalleryFragment fragment = new PhotoGalleryFragment();
         fragment.setPhotosList(photos);
         return fragment;
     }
 
-    public void setPhotosList(ArrayList<AppPhotoBundle> photos) {
+    public void setPhotosList(ArrayList<AppPhotoDetails> photos) {
 
         mPhotosList = photos;
     }
@@ -119,8 +119,7 @@ public class PhotoGalleryFragment extends Fragment {
         @Override
         public void onBindViewHolder(final GalleryViewHolder holder, int position) {
 
-
-            AppPhotoBundle photo = null;
+            AppPhotoDetails photo = null;
             try {
                 photo = mPhotosList.get(position);
             } catch (Exception e) {
@@ -139,24 +138,7 @@ public class PhotoGalleryFragment extends Fragment {
 
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
                                         holder.mImageView.isAttachedToWindow()) {
-
-                                    // this groovy effect requires Android 5.0 and above
-                                    float radius =
-                                            Math.max(holder.mImageView.getMeasuredHeight(), holder.mImageView.getMeasuredWidth());
-
-                                    Animator reveal = ViewAnimationUtils.createCircularReveal(
-                                            holder.mImageView,           // The  View to reveal
-                                            Math.round(
-                                                    radius *
-                                                            0.5f),      // x to start the mask from - start from the middle
-                                            Math.round(
-                                                    radius),      // y to start the mask from - start from the bottom
-                                            0f,                          // radius of the starting mask
-                                            radius);                     // radius of the final mask
-                                    reveal.setDuration(150L)
-                                            .setInterpolator(AnimationUtils.loadInterpolator(getActivity(),
-                                                    android.R.interpolator.linear_out_slow_in));
-                                    reveal.start();
+                                    revealView(holder.mImageView);
                                 }
                                 holder.mImageView.setImageBitmap(bitmap);
                                 holder.mImageView.setVisibility(View.VISIBLE);
@@ -167,9 +149,11 @@ public class PhotoGalleryFragment extends Fragment {
 
                             public void onErrorResponse(VolleyError error) {
 
+                                //TODO: handle the error properly
                                 holder.mImageView.setImageBitmap(/*R.drawable.image_load_error*/ null);
                             }
                         });
+                // launch the request
                 VolleyWrapper.getInstance(getActivity())
                         .addToRequestQueue(holder.mImageRequest);
             }
@@ -190,6 +174,30 @@ public class PhotoGalleryFragment extends Fragment {
             return mPhotosList == null ?
                    0 :
                    mPhotosList.size();
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private void revealView(View view) {
+        // this groovy effect requires Android 5.0 and above
+
+        if (view != null) {
+            float radius =
+                    Math.max(view.getMeasuredHeight(), view.getMeasuredWidth());
+
+            Animator reveal = ViewAnimationUtils.createCircularReveal(
+                    view,           // The  View to reveal
+                    Math.round(
+                            radius *
+                                    0.5f),      // x to start the mask from - start from the middle
+                    Math.round(
+                            radius),      // y to start the mask from - start from the bottom
+                    0f,                          // radius of the starting mask
+                    radius);                     // radius of the final mask
+            reveal.setDuration(150L)
+                    .setInterpolator(AnimationUtils.loadInterpolator(getActivity(),
+                            android.R.interpolator.linear_out_slow_in));
+            reveal.start();
         }
     }
 }
