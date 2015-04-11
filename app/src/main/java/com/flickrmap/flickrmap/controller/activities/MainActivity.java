@@ -17,6 +17,7 @@ import com.flickrmap.flickrmap.model.GetPhotosService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -35,14 +36,22 @@ import auto.parcel.AutoParcel;
 public class MainActivity extends ActionBarActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMyLocationButtonClickListener, GetPhotosService.OnPhotosResultListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
+
+    public static final int INITIAL_ZOOM = 12; // this should provide a ~50KM radius
+
     private MapFragment mMapFragment;
+
     private GoogleApiClient mGoogleApiClient;
+
     private BroadcastReceiver mPhotosResultsReceiver;
+
     private HashMap<String, AppPhotoBundle> mAppPhotosMap;
+
     private PhotoGalleryFragment mPhotoGalleryFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         if (savedInstanceState == null) {
@@ -64,6 +73,7 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
     @Override
     protected void onResume() {
+
         super.onResume();
         mGoogleApiClient.connect();
         mPhotosResultsReceiver = GetPhotosService.registerOnPhotosResultListener(this, this);
@@ -71,6 +81,7 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
     @Override
     public void onPause() {
+
         super.onPause();
         mGoogleApiClient.disconnect();
         try {
@@ -105,12 +116,34 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
         googleMap.setMyLocationEnabled(true);
         googleMap.setOnMyLocationButtonClickListener(this);
+
+    }
+
+    private Location getCurrentLocation() {
+
+        return LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
     }
 
     @Override
     public void onConnected(Bundle bundle) {
+        // hte google api client is connected - get current location and zoom to it
+
+        GoogleMap googleMap = mMapFragment == null ?
+                              null :
+                              mMapFragment.getMap();
+        if (googleMap != null) {
+            // Move the camera instantly to hamburg with a zoom of 15.
+            Location currentLocation = getCurrentLocation();
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), INITIAL_ZOOM));
+
+            // Zoom in, animating the camera.
+            googleMap.animateCamera(CameraUpdateFactory.zoomTo(INITIAL_ZOOM), 2000, null);
+
+            retrievePhotosForLocation(getCurrentLocation());
+        }
 
     }
 
@@ -126,15 +159,20 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
     @Override
     public boolean onMyLocationButtonClick() {
-        Location currentLocation =
-                LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+
+        retrievePhotosForLocation(getCurrentLocation());
+        return false;
+    }
+
+    private void retrievePhotosForLocation(Location location) {
 
         startService(GetPhotosService
                 .createGetPhotosByLocationServiceIntent(
                         this,
-                        currentLocation,
+                        location != null ?
+                        location :
+                        getCurrentLocation(),
                         100));
-        return false;
     }
 
     private void populatePhotosOnMap(ArrayList<Photo> photos) {
@@ -170,6 +208,7 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
     }
 
     private AppPhotoBundle createAppPhotoBundle(String markerId, Photo photo) {
+
         return AppPhotoBundleImpl.create(markerId,
                 photo.getLargeUrl(),
                 photo.getSmallSquareUrl(), // should be 75x75
@@ -179,11 +218,13 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
     @Override
     public void onPhotosResult(Context context, ArrayList<Photo> photos) {
+
         populatePhotosOnMap(photos);
         populateThumbsGallery();
     }
 
     private void populateThumbsGallery() {
+
         ArrayList<AppPhotoBundle> appPhotoBundles =
                 new ArrayList<AppPhotoBundle>(mAppPhotosMap.values());
         if (mPhotoGalleryFragment == null) {
@@ -204,12 +245,14 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
     @AutoParcel
     static abstract class AppPhotoBundleImpl implements AppPhotoBundle {
+
         static AppPhotoBundleImpl create(
                 @Nullable String markerId,
                 @Nullable String largeUrl,
                 @Nullable String thumbnailUrl,
                 @Nullable String title,
                 @Nullable String description) {
+
             return new AutoParcel_MainActivity_AppPhotoBundleImpl(markerId, largeUrl, thumbnailUrl, title, description);
         }
     }
