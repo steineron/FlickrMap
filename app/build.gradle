@@ -6,6 +6,19 @@ android {
     compileSdkVersion 22
     buildToolsVersion "22.0.1"
 
+    packagingOptions {
+        exclude 'META-INF/ASL2.0'
+        exclude 'META-INF/LICENSE'
+        exclude 'license.txt'
+        exclude 'LICENSE.txt'
+        exclude 'NOTICE'
+        exclude 'LICENSE'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/notice.txt'
+        exclude 'asm-license.txt'
+    }
+
     defaultConfig {
         applicationId "com.flickrmap.flickrmap"
         minSdkVersion 17
@@ -13,8 +26,10 @@ android {
         versionCode 1
         versionName "1.0"
     }
+
     signingConfigs {
         debug {
+            // very important to use this key for debug build because ht eGoogle API key is coupled to it
             storeFile file("../debug.keystore")
             storePassword "android"
             keyAlias "androiddebugkey"
@@ -33,18 +48,56 @@ android {
 }
 
 dependencies {
+    // AutoParcel, AutoValue
     compile 'com.github.frankiesardo:auto-parcel:0.3'
     apt 'com.github.frankiesardo:auto-parcel-processor:0.3'
-
     provided 'com.google.auto.value:auto-value:1.0'
+
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:22.0.0'
-    compile "com.android.support:leanback-v17:21.0.0"
     compile 'com.google.android.gms:play-services:7.0.0'
     compile 'org.slf4j:slf4j-api:1.7.5'
 
+    // Volley
     compile 'com.mcxiaoke.volley:library:1.0.+@aar'
+
+    // Flickr client
     compile 'com.googlecode.flickrj-android:flickrj-android:2.1.0'
+
+    // Recycler adn Card Views
     compile 'com.android.support:recyclerview-v7:21.0.+'
 //    compile 'com.android.support:cardview-v7:21.0.+'
+
+    // dagger 2
+//    compile 'com.google.dagger:dagger:2.0'
+//    apt 'com.google.dagger:dagger-compiler:2.0'
+
+
+    // ANDROID TEST
+
+    // adds the @Generated annoation that Android lacks
+//    androidTestCompile 'com.android.support:support-annotations:21.0.3'
+
+    //assertJ
+//    androidTestCompile 'com.squareup.assertj:assertj-android-support-v4:1.0.0'
+//    androidTestCompile 'com.squareup.assertj:assertj-android-appcompat-v7:1.0.0'
+//    androidTestCompile 'com.squareup.assertj:assertj-android:1.0.0'
+
+    // Mockito
+//    androidTestCompile 'org.mockito:mockito-core:1.10.19'
+
+    // android testing support lib
+//    androidTestCompile 'com.android.support.test:testing-support-lib:0.1'
+
+
+    // UNIT TEST
+    // Robolectric
+//    testCompile 'junit:junit:4.12'
+//    testCompile 'org.hamcrest:hamcrest-core:1.1'
+//    testCompile 'org.hamcrest:hamcrest-library:1.1'
+//    testCompile 'org.hamcrest:hamcrest-integration:1.1'
+//    testCompile 'org.robolectric:robolectric:3.0-rc2'
+    //Mockito (again)
+//    testCompile 'org.mockito:mockito-core:1.10.19'
+
 }
