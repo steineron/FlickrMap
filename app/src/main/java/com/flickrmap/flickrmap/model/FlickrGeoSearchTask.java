@@ -5,9 +5,12 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 
 import com.googlecode.flickrjandroid.Flickr;
+import com.googlecode.flickrjandroid.FlickrException;
 import com.googlecode.flickrjandroid.photos.PhotoList;
 import com.googlecode.flickrjandroid.photos.PhotosInterface;
 import com.googlecode.flickrjandroid.photos.SearchParameters;
+import com.googlecode.flickrjandroid.places.Place;
+import com.googlecode.flickrjandroid.places.PlacesInterface;
 
 import java.util.HashSet;
 
@@ -44,7 +47,7 @@ class FlickrGeoSearchTask extends AsyncTask<Bundle, Void, PhotoList> {
                               params[ 0 ] :
                               null;
 
-        PhotoList photos = null;
+        PhotoList photos = new PhotoList();
         if (searchParams != null) {
             try {
                 PhotosIntents.Parser parser = new PhotosIntents.Parser(searchParams);
@@ -52,6 +55,16 @@ class FlickrGeoSearchTask extends AsyncTask<Bundle, Void, PhotoList> {
                 int maxResults = parser.getMaxResults();
                 Flickr flickr = new Flickr(FLICKER_API_KEY);
                 PhotosInterface photosInterface = flickr.getPhotosInterface();
+                PlacesInterface placesInterface = flickr.getPlacesInterface();
+
+                /*PlacesList places =
+                        placesInterface.findByLatLon(searchLocation.getLatitude(), searchLocation.getLongitude(), Flickr.ACCURACY_STREET);
+
+                for (Place place : places) {
+
+                    photos.addAll( photosInterface.search(getSearchParameters(place), maxResults, 1) );
+                }*/
+
 
                 photos = photosInterface.search(getSearchParameters(searchLocation), maxResults, 1);
 
@@ -64,12 +77,35 @@ class FlickrGeoSearchTask extends AsyncTask<Bundle, Void, PhotoList> {
 
     }
 
+    private SearchParameters getSearchParameters(final Place place) {
+
+        SearchParameters searchParameters = new SearchParameters();
+        searchParameters.setPlaceId(place.getPlaceId());
+        searchParameters.setHasGeo(true);
+//        searchParameters.setAccuracy(3);
+        try {
+            searchParameters.setMedia("photos");
+        } catch (FlickrException e) {
+            e.printStackTrace();
+        }
+
+        searchParameters.setExtras(mPhotoExtras);
+        return searchParameters;
+    }
+
     private SearchParameters getSearchParameters(Location searchLocation) {
 
         SearchParameters searchParameters = new SearchParameters();
         searchParameters.setLongitude(String.valueOf(searchLocation.getLongitude()));
         searchParameters.setLatitude(String.valueOf(searchLocation.getLatitude()));
         searchParameters.setHasGeo(true);
+//        searchParameters.setAccuracy(3);
+        try {
+            searchParameters.setMedia("photos");
+        } catch (FlickrException e) {
+            e.printStackTrace();
+        }
+
         searchParameters.setExtras(mPhotoExtras);
         return searchParameters;
     }
