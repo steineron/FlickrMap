@@ -7,5 +7,6 @@
 /*.iml
 
 /gradle
-/.gradlew
-/.gradle.bat
+
+gradlew.bat
+gradlew
