@@ -14,6 +14,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -44,7 +45,12 @@ import java.util.HashMap;
 import auto.parcel.AutoParcel;
 
 
-public class MainActivity extends ActionBarActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMyLocationButtonClickListener, GetPhotosService.OnPhotosResultListener, AppPhotoDetailsIntent.OnDisplayAppPhotoListener {
+public class MainActivity extends ActionBarActivity implements OnMapReadyCallback,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        GoogleMap.OnMyLocationButtonClickListener,
+        GetPhotosService.OnPhotosResultListener,
+        AppPhotoDetailsIntent.OnDisplayAppPhotoListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -54,12 +60,14 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
     private GoogleApiClient mGoogleApiClient;
 
-    private BroadcastReceiver mPhotosResultsReceiver;
-
-    private HashMap<String, AppPhotoDetails> mAppPhotosMap;
+    private HashMap<String, AppPhotoDetailsImpl> mAppPhotosMap;
 
     private PhotoGalleryFragment mPhotoGalleryFragment;
 
+    // a receiver to handle result of get photos
+    private BroadcastReceiver mPhotosResultsReceiver;
+
+    // a receiver to handle requests to display a photo on the map
     private BroadcastReceiver mDisplayAppPhotoReceiver;
 
     @Override
@@ -69,15 +77,16 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_main);
         if (savedInstanceState == null) {
             // add the map fragment, load the map.
-            // connect the api-client
-            // once the client connects  - start loading the photos for the current location.
             mMapFragment = new PhotosMapFragment();
             getFragmentManager().beginTransaction()
                     .add(R.id.container, mMapFragment)
                     .commit();
 
+            //start loading the map
             mMapFragment.getMapAsync(this);
 
+            // connect the api-client
+            // once the client connects  - start loading the photos for the current location.
             mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addApi(LocationServices.API)
                     .addConnectionCallbacks(this)
@@ -94,7 +103,10 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
         mGoogleApiClient.connect();
 
         // register a listener to handle retrieval of photos
-        mPhotosResultsReceiver = GetPhotosService.registerOnPhotosResultListener(this, this);
+        mPhotosResultsReceiver =
+                GetPhotosService.registerOnPhotosResultListener(this, this);
+
+        //register a listener to handle requests to display a photo on the map
         mDisplayAppPhotoReceiver =
                 AppPhotoDetailsIntent.registerDisplayAppPhotoListener(this, this);
 
@@ -107,12 +119,14 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
         mGoogleApiClient.disconnect();
         try {
             unregisterReceiver(mDisplayAppPhotoReceiver);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
         try {
             unregisterReceiver(mPhotosResultsReceiver);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -132,7 +146,9 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_clear) {
+            removeAllMarkers();
+            Toast.makeText(this,R.string.feedback_marker_cleared,Toast.LENGTH_SHORT).show();
             return true;
         }
 
@@ -149,19 +165,72 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
 
     }
 
-    private Location getCurrentLocation() {
-
-        return LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-    }
+    /* Google Api Client callbacks */
 
     @Override
     public void onConnected(Bundle bundle) {
         // hte google api client is connected - get current location and zoom to it
-
-
         zoomToLocation(getCurrentLocation());
         // now retrieve phot's details for this location
         retrievePhotosForLocation(getCurrentLocation());
+    }
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        Toast.makeText(this,R.string.error_connecting_api_client,Toast.LENGTH_SHORT).show();
+
+    }
+
+    /* Map callbacks */
+
+    @Override
+    public boolean onMyLocationButtonClick() {
+
+        retrievePhotosForLocation(getCurrentLocation());
+        return false;
+    }
+
+    /**
+     *  implementing {@link com.flickrmap.flickrmap.model.GetPhotosService.OnPhotosResultListener}
+     */
+    @Override
+    public void onPhotosResult(Context context, ArrayList<Photo> photos) {
+
+        populatePhotosOnMap(photos);
+        populateThumbsGallery();
+    }
+
+    @Override
+    public void onFault(Context context) {
+        Toast.makeText(this,R.string.error_photos_retrieve,Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     *  implementing {@link com.flickrmap.flickrmap.controller.AppPhotoDetailsIntent.OnDisplayAppPhotoListener}
+     */
+    @Override
+    public void onDisplayAppPhoto(final AppPhotoDetails photoDetails) {
+
+        if (photoDetails != null && mAppPhotosMap != null) {
+            AppPhotoDetailsImpl detailsImpl =
+                    (AppPhotoDetailsImpl) mAppPhotosMap.get(photoDetails.getId());
+            Marker mapMarker = detailsImpl.getMapMarker();
+            if (mapMarker != null) {
+                mapMarker.showInfoWindow();
+                zoomToLocation(mapMarker.getPosition());
+            }
+        }
+    }
+
+    /*private*/
+
+    private Location getCurrentLocation() {
+
+        return LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
     }
 
     private void zoomToLocation(final Location location) {
@@ -174,8 +243,8 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
     private void zoomToLocation(final LatLng latLng) {
 
         GoogleMap googleMap = mMapFragment == null ?
-                              null :
-                              mMapFragment.getMap();
+                null :
+                mMapFragment.getMap();
         if (googleMap != null) {
             // Move the camera instantly tolocation with a zoom of 15.
             googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, INITIAL_ZOOM + 1));
@@ -185,41 +254,27 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
         }
     }
 
-    @Override
-    public void onConnectionSuspended(int i) {
 
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-
-    }
-
-    @Override
-    public boolean onMyLocationButtonClick() {
-
-        retrievePhotosForLocation(getCurrentLocation());
-        return false;
-    }
 
     private void retrievePhotosForLocation(Location location) {
 
-        startService(GetPhotosService
-                .createGetPhotosByLocationServiceIntent(
-                        this,
-                        location != null ?
-                        location :
-                        getCurrentLocation(),
-                        100));
+        startService(
+                GetPhotosService
+                        .createGetPhotosByLocationServiceIntent(
+                                this,
+                                location != null ?
+                                        location :
+                                        getCurrentLocation(),
+                                100));
     }
 
     private void populatePhotosOnMap(ArrayList<Photo> photos) {
 
         // remove all markers
+        removeAllMarkers();
 
         // re-populate makers
-
-        mAppPhotosMap = new HashMap<String, AppPhotoDetails>(); // will clear older references
+        mAppPhotosMap = new HashMap<String, AppPhotoDetailsImpl>(); // will clear older references
         int n = 0;
         for (Photo photo : photos) {
             try {
@@ -229,36 +284,43 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
                         .position(position);
                 Marker marker = mMapFragment.getMap()
                         .addMarker(makerOptions);
+
                 String markerId = marker.getId();
-                AppPhotoDetails appPhotoDetails = createAppPhotoDetails(marker, photo);
+                AppPhotoDetailsImpl appPhotoDetails = createAppPhotoDetails(marker, photo);
                 Log.v(TAG, "adding marker for: " + appPhotoDetails.toString() + " at: " +
                         position.toString());
 
                 // keep a mapping from marker to photo-bundle so events identified by the marker's id can be related to a photo's details
                 mAppPhotosMap.put(markerId, appPhotoDetails);
 
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
     }
 
-    private AppPhotoDetails createAppPhotoDetails(Marker marker, Photo photo) {
+    private void removeAllMarkers() {
 
-        return AppPhotoDetailsImpl.create(marker.getId(),
-                marker,
-                photo.getSmallSquareUrl(), // should be 75x75
-                photo.getMediumUrl(),
-                photo.getTitle(),
-                photo.getDescription());
+        if (mAppPhotosMap!=null) {
+            for (AppPhotoDetailsImpl appPhotoDetails : mAppPhotosMap.values()) {
+                Marker marker = appPhotoDetails.getMapMarker();
+                if(marker!=null){
+                    marker.remove();
+                }
+            }
+        }
     }
 
-    @Override
-    public void onPhotosResult(Context context, ArrayList<Photo> photos) {
+    private AppPhotoDetailsImpl createAppPhotoDetails(Marker marker, Photo photo) {
 
-        populatePhotosOnMap(photos);
-        populateThumbsGallery();
+        return AppPhotoDetailsImpl.create(marker.getId(),
+                                          marker,
+                                          photo.getSmallSquareUrl(), // should be 75x75
+                                          photo.getMediumUrl(),
+                                          photo.getTitle(),
+                                          photo.getDescription());
     }
 
     private void populateThumbsGallery() {
@@ -276,30 +338,17 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
         }
     }
 
-    @Override
-    public void onFault(Context context) {
 
-    }
 
-    @Override
-    public void onDisplayAppPhoto(final AppPhotoDetails photoDetails) {
-
-        if (photoDetails != null && mAppPhotosMap != null) {
-            AppPhotoDetailsImpl detailsImpl =
-                    (AppPhotoDetailsImpl) mAppPhotosMap.get(photoDetails.getId());
-            Marker mapMarker = detailsImpl.getMapMarker();
-            if (mapMarker != null) {
-                mapMarker.showInfoWindow();
-                zoomToLocation(mapMarker.getPosition());
-            }
-        }
-    }
 
     /**
      * {@link AppPhotoDetailsImpl} - an internal implementation for the {@link AppPhotoDetails} interface
      * the current activity creates and manages instances of this class.
+     *
      * each instance is coupled to a maker on the map and mapped using {@link Marker:getId}.
      * the mapping takes place via {@value MainActivity:mAppPhotosMap}
+     *
+     * this instance also keeps a bitmap of the iamge if it was retrieved.
      */
     @AutoParcel
     static abstract class AppPhotoDetailsImpl implements AppPhotoDetails {
@@ -335,10 +384,11 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
                 @Nullable String largeUrl,
                 @Nullable String title,
                 @Nullable String description
-                                         ) {
+        ) {
 
             AutoParcel_MainActivity_AppPhotoDetailsImpl details =
-                    new AutoParcel_MainActivity_AppPhotoDetailsImpl(markerId, thumbnailUrl, largeUrl, title, description);
+                    new AutoParcel_MainActivity_AppPhotoDetailsImpl(markerId, thumbnailUrl, largeUrl, title,
+                                                                    description);
             details.setMarker(mapMarker);
             return details;
         }
@@ -352,14 +402,14 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
         @Override
         public View getInfoWindow(Marker marker) {
 
-            return null; // default buble-style
+            return null; // default bubble-style
         }
 
         @Override
         public View getInfoContents(Marker marker) {
 
             final AppPhotoDetailsImpl photo =
-                    (AppPhotoDetailsImpl) mAppPhotosMap.get(marker.getId());
+                     mAppPhotosMap.get(marker.getId());
             View view = null;
 
             if (photo != null && photo.getLargeBitmap() != null) {
@@ -389,23 +439,23 @@ public class MainActivity extends ActionBarActivity implements OnMapReadyCallbac
             ImageRequest imageRequest = null;
             if (photo != null) {
                 imageRequest = new ImageRequest(photo.getLargeSizeUrl(),
-                        new Response.Listener<Bitmap>() {
+                                                new Response.Listener<Bitmap>() {
 
-                            @Override
-                            public void onResponse(Bitmap bitmap) {
+                                                    @Override
+                                                    public void onResponse(Bitmap bitmap) {
 
-                                photo.setLargeBitmap(bitmap);
-                                marker.showInfoWindow();
-                            }
+                                                        photo.setLargeBitmap(bitmap);
+                                                        marker.showInfoWindow();
+                                                    }
 
-                        }, 0, 0, ImageView.ScaleType.CENTER_CROP, null,
-                        new Response.ErrorListener() {
+                                                }, 0, 0, ImageView.ScaleType.CENTER_CROP, null,
+                                                new Response.ErrorListener() {
 
-                            public void onErrorResponse(VolleyError error) {
+                                                    public void onErrorResponse(VolleyError error) {
 
-                                //TODO: handle the error properly - display error image
-                            }
-                        });
+                                                        //TODO: handle the error properly - display error image
+                                                    }
+                                                });
                 // launch the request
                 VolleyWrapper.getInstance(MainActivity.this)
                         .addToRequestQueue(imageRequest);
