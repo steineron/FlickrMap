@@ -3,6 +3,8 @@ package com.flickrmap.flickrmap.controller.fragments;
 import android.animation.Animator;
 import android.annotation.TargetApi;
 import android.app.Fragment;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
@@ -20,11 +22,12 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageRequest;
 import com.flickrmap.flickrmap.R;
 import com.flickrmap.flickrmap.controller.AppPhotoDetails;
-import com.flickrmap.flickrmap.controller.AppPhotoDetailsIntent;
+import com.flickrmap.flickrmap.controller.AppPhotosIntents;
 import com.flickrmap.flickrmap.model.VolleyWrapper;
 import com.flickrmap.flickrmap.view.HorizontalSpaceDecorator;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * A  {@link Fragment} subclass that display a list of images in a horizontal gallery.
@@ -32,12 +35,14 @@ import java.util.ArrayList;
  * Use the {@link PhotoGalleryFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class PhotoGalleryFragment extends Fragment {
+public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.OnMapPhotosChangeListener{
 
 
     private RecyclerView mGalleryView;
 
     private ArrayList<AppPhotoDetails> mPhotosList;
+
+    private BroadcastReceiver mMapPhotosChangedReceiver;
 
     /**
      * Use this factory method to create a new instance of
@@ -46,16 +51,16 @@ public class PhotoGalleryFragment extends Fragment {
      * @param photos - an array list of {@link com.flickrmap.flickrmap.controller.AppPhotoDetails} that owns the details about the photos this gallery fragment displays
      * @return A new instance of fragment PhotoGalleryFragment.
      */
-    public static PhotoGalleryFragment newInstance(ArrayList<AppPhotoDetails> photos) {
+    public static PhotoGalleryFragment newInstance(Collection<AppPhotoDetails> photos) {
 
         PhotoGalleryFragment fragment = new PhotoGalleryFragment();
         fragment.setPhotosList(photos);
         return fragment;
     }
 
-    public void setPhotosList(ArrayList<AppPhotoDetails> photos) {
+    public void setPhotosList(Collection<AppPhotoDetails> photos) {
 
-        mPhotosList = photos;
+        mPhotosList = new ArrayList<>(photos);
     }
 
     public PhotoGalleryFragment() {
@@ -66,6 +71,7 @@ public class PhotoGalleryFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+        mMapPhotosChangedReceiver = PhotosMapFragment.registerOnMapPhotosChangeListener(getActivity(), this);
 
     }
 
@@ -90,6 +96,38 @@ public class PhotoGalleryFragment extends Fragment {
         mGalleryView.addItemDecoration(new HorizontalSpaceDecorator(getResources().getInteger(R.integer.gallery_space_half_size)));
         mGalleryView.setAdapter(new PhotoGalleryAdapter());
 
+    }
+
+    @Override
+    public void onDestroy() {
+
+        try {
+            getActivity().unregisterReceiver(mMapPhotosChangedReceiver);
+        }
+        catch (Exception e) {
+
+        }
+        super.onDestroy();
+    }
+
+    @Override
+    public void onMapPhotosAdded(final Context context, final Collection<AppPhotoDetails> photos) {
+        setPhotosList(photos);
+        if(mGalleryView!=null){
+            mGalleryView.setAdapter(new PhotoGalleryAdapter());
+        }
+    }
+
+    @Override
+    public void onMapPhotosRemoved(final Context context, final Collection<AppPhotoDetails> photos) {
+
+    }
+
+    @Override
+    public void onMapPhotosCleared(final Context context) {
+        if(mGalleryView!=null){
+            mGalleryView.setAdapter(null);
+        }
     }
 
     private class GalleryViewHolder extends RecyclerView.ViewHolder {
@@ -159,7 +197,7 @@ public class PhotoGalleryFragment extends Fragment {
                         @Override
                         public void onClick(final View v) {
 
-                            getActivity().sendBroadcast(AppPhotoDetailsIntent
+                            getActivity().sendBroadcast(AppPhotosIntents
                                     .createDisplayAppPhotoIntent(getActivity(), photo));
                         }
                     });
