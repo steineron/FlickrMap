@@ -7,10 +7,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
-
 import java.util.Random;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 @SmallTest
 @RunWith(MockitoJUnitRunner.class)
@@ -18,31 +19,98 @@ public class TSPNearestNeighbourTest {
 
     private int[][] mGraph;
 
+    private TSPNearestNeighbour mTSPNearestNeighbour;
+
+    private boolean pathStartsAtZero(int[] path) {
+
+        return path != null && path[0] == 0;
+    }
+
+    // checks that the path is valid nad is a Hemiltonian path - traverses all vertices only once
+    private boolean pathIsHemilton(int path[]) {
+
+        boolean is = path != null;
+        if (is) {
+            int visits[] = new int[path.length];
+            try {
+                for (int i = 0; i < path.length; i++) {
+                    if (visits[path[i]] == 1) {
+                        is = false;
+                        break;
+                    }
+                    visits[path[i]] = 1;
+                }
+            }
+            catch (IndexOutOfBoundsException e) {
+                e.printStackTrace();
+                // any out -of -bounds exception means the path is not valid
+                is = false;
+            }
+            finally {
+                for (int i = 0; i < visits.length; i++) {
+                    is = is && visits[i] == 1;
+                }
+            }
+        }
+        return is;
+    }
+
     @Before
-    public void buildAdjacencyMatrix() {
+    public void initTSP() {
 
+        mTSPNearestNeighbour = new TSPNearestNeighbour();
+    }
 
+    @Test
+    public void test_100_x_100_TSP_is_executable_and_completes() throws Exception {
+
+        Random rand = new Random();
+        int nodes = 100;
+        mGraph = new int[nodes][nodes];
+        for (int i = 0; i < nodes; i++) {
+            for (int j = 0; j < nodes; j++) {
+                mGraph[i][j] = i == j ?
+                        0 :
+                        rand.nextInt(1000);
+            }
+        }
+        System.out.println(System.currentTimeMillis());
+        int[] result = mTSPNearestNeighbour.tsp(mGraph);
+        System.out.println(System.currentTimeMillis());
+        System.out.println("\n");
+        assertNotNull(result);
+        assertEquals(nodes, result.length);
+        assertTrue(pathStartsAtZero(result));
+        assertTrue(pathIsHemilton(result));
 
     }
 
     @Test
-    public void test_100_x_100_TSP() throws Exception {
+    public void test_100_x_100_fully_connected_TSP() throws Exception {
 
-        System.out.println(System.currentTimeMillis());
         Random rand = new Random();
-        mGraph = new int[100][100];
-        for (int i = 0; i < 100; i++) {
-            for (int j = 0; j < 100; j++) {
-                mGraph[i][j] = i==j ? 0 : rand.nextInt(1000);
+        int nodes = 100;
+        mGraph = new int[nodes][nodes];
+        for (int i = 0; i < nodes; i++) {
+            for (int j = 0; j < nodes; j++) {
+                mGraph[i][j] = i == j ?
+                        0 :
+                        rand.nextInt(1000);
+                mGraph[j][i] = mGraph[i][j];
             }
         }
         System.out.println(System.currentTimeMillis());
-        TSPNearestNeighbour tsp = new TSPNearestNeighbour();
-        int [] result = tsp.tsp(mGraph);
+        int[] result = mTSPNearestNeighbour.tsp(mGraph);
+        System.out.println("\n");
         System.out.println(System.currentTimeMillis());
+        assertNotNull(result);
+        assertEquals(nodes, result.length);
+        assertTrue(pathStartsAtZero(result));
+        assertTrue(pathIsHemilton(result));
 
     }
-        @Test
+
+    @Test
     public void test_known_TSP() throws Exception {
 
         mGraph = new int[][]{
@@ -58,19 +126,54 @@ public class TSPNearestNeighbourTest {
                 {356, 17, 247, 155, 423, 181, 117, 78, 118, 0}
         };
 
-        TSPNearestNeighbour tsp = new TSPNearestNeighbour();
 
-        int [] result = tsp.tsp(mGraph);
-        // should be 1	5	3	2	9	7	4	6	8
-        assertEquals(result[1],1);
-        assertEquals(result[2],9);
-        assertEquals(result[3],7);
-        assertEquals(result[4],8);
-        assertEquals(result[5],3);
-        assertEquals(result[6],5);
-        assertEquals(result[7],6);
-        assertEquals(result[8],2);
-        assertEquals(result[9],4);
+        int[] result = mTSPNearestNeighbour.tsp(mGraph);
+        assertNotNull(result);
+        assertEquals(10, result.length);
+        // should be0	4	2	3	8	7	9	1	6	5
+        assertEquals(result[0], 0);
+        assertEquals(result[1], 4);
+        assertEquals(result[2], 2);
+        assertEquals(result[3], 3);
+        assertEquals(result[4], 8);
+        assertEquals(result[5], 7);
+        assertEquals(result[6], 9);
+        assertEquals(result[7], 1);
+        assertEquals(result[8], 6);
+        assertEquals(result[9], 5);
+        assertTrue(pathStartsAtZero(result));
+        assertTrue(pathIsHemilton(result));
+
+    }
+
+    @Test
+    public void test_ordered_TSP() throws Exception {
+
+        mGraph = new int[][]{
+                {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+                {9, 0, 1, 2, 3, 4, 5, 6, 7, 8},
+                {8, 9, 0, 1, 2, 3, 4, 5, 6, 7},
+                {7, 8, 9, 0, 1, 2, 3, 4, 5, 6},
+                {6, 7, 8, 9, 0, 1, 2, 3, 4, 5},
+                {5, 6, 7, 8, 9, 0, 1, 2, 3, 4},
+                {4, 5, 6, 7, 8, 9, 0, 1, 2, 3},
+                {3, 4, 5, 6, 7, 8, 9, 0, 1, 2},
+                {2, 3, 4, 5, 6, 7, 8, 9, 0, 1},
+                {1, 2, 3, 4, 5, 6, 7, 8, 9, 0}
+        };
+
+
+        int[] result = mTSPNearestNeighbour.tsp(mGraph);
+        assertNotNull(result);
+        assertEquals(10, result.length);
+        assertTrue(pathStartsAtZero(result));
+        assertTrue(pathIsHemilton(result));
+        // should be 0 1 2 3 4 5 6 7 8 9
+        for (int i = 0; i < result.length; i++) {
+
+            assertEquals(result[i], i);
+        }
+
 
     }
 }
