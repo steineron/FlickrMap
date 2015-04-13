@@ -25,6 +25,8 @@ android {
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"
+        manifestPlaceholders = [googleGeoApiKey: "AIzaSyCb68S6W9Qm1WEBqldEeSVrMywrE366yMo"]
+        buildConfigField("String", "FLICKR_API_KEY", "\"c58fa329327dc0bd3b0bb1b3954b5a37\"")
     }
 
     signingConfigs {
@@ -36,6 +38,7 @@ android {
             keyPassword "android"
         }
     }
+
     buildTypes {
         release {
             minifyEnabled false

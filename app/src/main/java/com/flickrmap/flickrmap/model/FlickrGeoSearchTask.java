@@ -2,8 +2,10 @@ package com.flickrmap.flickrmap.model;
 
 import android.location.Location;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 
+import com.flickrmap.flickrmap.BuildConfig;
 import com.googlecode.flickrjandroid.Flickr;
 import com.googlecode.flickrjandroid.FlickrException;
 import com.googlecode.flickrjandroid.photos.PhotoList;
@@ -15,11 +17,12 @@ import com.googlecode.flickrjandroid.places.PlacesInterface;
 import java.util.HashSet;
 
 /**
+ * an AsyncTask for retrieving Flickr images based on geo-location
+ *
  * Created by ron on 4/9/15.
  */
 class FlickrGeoSearchTask extends AsyncTask<Bundle, Void, PhotoList> {
 
-    private static final java.lang.String FLICKER_API_KEY = "c58fa329327dc0bd3b0bb1b3954b5a37";
 
     private static HashSet<String> mPhotoExtras;
 
@@ -27,16 +30,16 @@ class FlickrGeoSearchTask extends AsyncTask<Bundle, Void, PhotoList> {
         mPhotoExtras = new HashSet<>();
         mPhotoExtras.add("geo");
         mPhotoExtras.add("media");
-        mPhotoExtras.add("url_sq");
-        mPhotoExtras.add("url_t");
-        mPhotoExtras.add("url_s");
+        /*mPhotoExtras.add("url_sq");*/
+        mPhotoExtras.add("url_t"); // thumbnail
+        /*mPhotoExtras.add("url_s");
         mPhotoExtras.add("url_q");
         mPhotoExtras.add("url_m");
         mPhotoExtras.add("url_n");
         mPhotoExtras.add("url_z");
-        mPhotoExtras.add("url_c");
-        mPhotoExtras.add("url_l");
-        mPhotoExtras.add("url_o");
+        mPhotoExtras.add("url_c");*/
+        mPhotoExtras.add("url_l"); //large size
+        /*mPhotoExtras.add("url_o");*/
         mPhotoExtras.add("original_format");
     }
 
@@ -53,7 +56,7 @@ class FlickrGeoSearchTask extends AsyncTask<Bundle, Void, PhotoList> {
                 PhotosIntents.Parser parser = new PhotosIntents.Parser(searchParams);
                 Location searchLocation = parser.getSearchLocation();
                 int maxResults = parser.getMaxResults();
-                Flickr flickr = new Flickr(FLICKER_API_KEY);
+                Flickr flickr = new Flickr(BuildConfig.FLICKR_API_KEY);
                 PhotosInterface photosInterface = flickr.getPhotosInterface();
                 PlacesInterface placesInterface = flickr.getPlacesInterface();
 
