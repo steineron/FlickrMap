@@ -16,7 +16,7 @@ public class TSPNearestNeighbour {
         stack = new Stack<Integer>();
     }
 
-    public int[] tsp(int adjacencyMatrix[][]) {
+    public int[] tsp(double adjacencyMatrix[][]) {
 
         numberOfNodes = adjacencyMatrix[ 0 ].length;
         int[] visited = new int[ numberOfNodes ];
@@ -25,7 +25,7 @@ public class TSPNearestNeighbour {
         visited[ 0 ] = 1;
         stack.push(0);
         int element, dst = 0, i;
-        int min = Integer.MAX_VALUE;
+        double min = Double.MAX_VALUE;
         boolean minFlag = false;
         System.out.print(0 + "\t");
         path[ visits ] = 0;
@@ -33,11 +33,11 @@ public class TSPNearestNeighbour {
 
         while (!stack.isEmpty()) {
             element = stack.peek();
-            i = 0;
+            i = 0; // could be element in this instance of TSP
             min = Integer.MAX_VALUE;
             while (i < numberOfNodes) {
-                if (adjacencyMatrix[ element ][ i ] > 0 && visited[ i ] == 0) {
-                    if (min > adjacencyMatrix[ element ][ i ]) {
+                if (adjacencyMatrix[ element ][ i ] >= 0.0 && visited[ i ] == 0) {
+                    if (min >= adjacencyMatrix[ element ][ i ]) {
                         min = adjacencyMatrix[ element ][ i ];
                         dst = i;
                         minFlag = true;

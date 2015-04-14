@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -24,6 +25,8 @@ import com.flickrmap.flickrmap.R;
 import com.flickrmap.flickrmap.controller.AppPhotoDetails;
 import com.flickrmap.flickrmap.controller.ControllerIntents;
 import com.flickrmap.flickrmap.model.GetPhotosService;
+import com.flickrmap.flickrmap.model.LongLatUtils;
+import com.flickrmap.flickrmap.model.TSPNearestNeighbour;
 import com.flickrmap.flickrmap.model.VolleyWrapper;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -35,11 +38,14 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.googlecode.flickrjandroid.photos.GeoData;
 import com.googlecode.flickrjandroid.photos.Photo;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 
 import auto.parcel.AutoParcel;
@@ -346,6 +352,14 @@ public class PhotosMapFragment extends MapFragment implements
         // re-populate makers
         mAppPhotosMap = new HashMap<String, AppPhotoDetailsImpl>(); // will clear older references
         int n = 0;
+        final ArrayList<LatLng> positions = new ArrayList<>(); // the positions assigned on the map
+
+        // while on it - find the smallest latitude/ longitude values - use them later for TSP's adjacency matrix
+        double minLat = Double.MAX_VALUE;
+        double minLng = Double.MAX_VALUE;
+        double maxLat = Double.MIN_VALUE;
+        double maxLng = Double.MIN_VALUE;
+
         for (Photo photo : photos) {
             try {
                 GeoData geoData = photo.getGeoData();
@@ -363,10 +377,80 @@ public class PhotosMapFragment extends MapFragment implements
                 // keep a mapping from marker to photo-bundle so events identified by the marker's id can be related to a photo's details
                 mAppPhotosMap.put(markerId, appPhotoDetails);
 
+                positions.add(position);
+                minLat = Math.min(position.latitude, minLat);
+                minLng = Math.min(position.longitude, minLng);
+                maxLat = Math.max(position.latitude, minLat);
+                maxLng = Math.max(position.longitude, minLng);
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+
+        //create teh adjacency matrix from the positions
+        int nodes = positions.size();
+
+        final LatLng startAt =
+                new LatLng(0.5 * (maxLat - minLat) + minLat, 0.5 * (maxLng - minLng) + minLng);
+
+        Collections.sort(positions, new Comparator<LatLng>() {
+
+            @Override
+            public int compare(final LatLng lhs, final LatLng rhs) {
+
+
+                return LongLatUtils.calculateDistance(startAt, lhs) >
+                               LongLatUtils.calculateDistance(startAt, rhs) ?
+                       -1 :
+                       1;
+            }
+        });
+
+        double[][] adjacencyMatrix = new double[ nodes ][ nodes ];
+
+        double distance;
+
+        for (int i = 0; i < nodes; i++) {
+            for (int j = i; j < nodes; j++) {
+                if (i != j) {
+                    distance = LongLatUtils.calculateDistance(positions.get(i), positions.get(j));
+
+                    adjacencyMatrix[ i ][ j ] = distance;
+                    adjacencyMatrix[ j ][ i ] = distance;
+                }
+                else {
+                    adjacencyMatrix[ i ][ j ] = 0.0;
+
+                }
+                System.out.print(String.format("%.2f\t", adjacencyMatrix[ i ][ j ]));
+            }
+            System.out.print("\n");
+        }
+
+        // a list of indexes in array positions[]
+        int path[] = new TSPNearestNeighbour().tsp(adjacencyMatrix);
+
+
+      /*  int[] colors =
+                new int[]{Color.BLACK, Color.RED, Color.GREEN, Color.BLUE, Color.DKGRAY, Color.MAGENTA};
+        for (int i = 1; i < nodes; i++) {
+            PolylineOptions mapPath = new PolylineOptions().width(4.0f)
+                    .color(colors[ (i - 1) % 6 ])
+                    .add(positions.get(i - 1))
+                    .add(positions.get(i));
+            getMap().addPolyline(mapPath);
+        }*/
+
+
+        PolylineOptions mapPath = new PolylineOptions().width(4.0f)
+                .color(Color.BLUE);
+
+        for (int i = 0; i < nodes; i++) {
+            mapPath = mapPath.add(positions.get(i));
+        }
+        getMap().addPolyline(mapPath);
+
 
     }
 
