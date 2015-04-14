@@ -21,10 +21,15 @@ import java.util.ArrayList;
 public class GetPhotosService extends Service {
 
     private static final String TAG = GetPhotosService.class.getSimpleName();
+
     private static final String ACTION_GET_PHOTOS = TAG + ".ACTION_GET_PHOTOS";
+
     private static final String ACTION_GET_PHOTOS_RESULT = TAG + ".ACTION_GET_PHOTOS_RESULT";
+
     private static final String EXTRA_RESULT_PHOTOS = TAG + ".EXTRA_RESULT_PHOTOS";
+
     private static final String EXTRA_SUCCESS = TAG + ".EXTRA_SUCCESS";
+
 
     public interface OnPhotosResultListener extends OnServiceResultListener {
 
@@ -34,7 +39,8 @@ public class GetPhotosService extends Service {
 
     public static Intent createGetPhotosByLocationServiceIntent(Context context, Location location,
                                                                 int maxPhotos) {
-        return new PhotosIntents.Builder(context)
+
+        return new GetPhotosIntents.Builder(context)
                 .withMexResults(maxPhotos)
                 .withSearchLocation(location)
                 .build()
@@ -45,18 +51,22 @@ public class GetPhotosService extends Service {
 
     public static BroadcastReceiver registerOnPhotosResultListener(final Context context,
                                                                    final OnPhotosResultListener listener) {
+
         BroadcastReceiver receiver =
                 listener == null ?
                 null :
                 new OnPhotosResultReceiver() {
+
                     @Override
                     public void onPhotosResult(Context context,
                                                ArrayList<Photo> photos) {
+
                         listener.onPhotosResult(context, photos);
                     }
 
                     @Override
                     public void onFault(Context context) {
+
                         listener.onFault(context);
                     }
                 };
@@ -71,6 +81,7 @@ public class GetPhotosService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
+
         return null;
     }
 
@@ -79,8 +90,10 @@ public class GetPhotosService extends Service {
 
         if (intent != null) {
             FlickrGeoSearchTask getPhotosTask = new FlickrGeoSearchTask() {
+
                 @Override
                 protected void onPostExecute(PhotoList photos) {
+
                     super.onPostExecute(photos);
                     sendBroadcast(new Intent(ACTION_GET_PHOTOS_RESULT)
                             .putExtra(EXTRA_SUCCESS, photos != null)

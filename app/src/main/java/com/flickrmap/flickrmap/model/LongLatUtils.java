@@ -27,7 +27,7 @@ public final class LongLatUtils {
     public static double calculateDistance(LatLng position1, LatLng position2) {
 
         return calculateDistance(position1.latitude, position1.longitude,
-                                 position2.latitude, position2.longitude);
+                position2.latitude, position2.longitude);
     }
 
 }

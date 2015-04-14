@@ -7,7 +7,7 @@ import java.util.Stack;
  */
 public class TSPNearestNeighbour {
 
-    private int            numberOfNodes;
+    private int numberOfNodes;
 
     private Stack<Integer> stack;
 
@@ -18,44 +18,39 @@ public class TSPNearestNeighbour {
 
     public int[] tsp(int adjacencyMatrix[][]) {
 
-        numberOfNodes = adjacencyMatrix[0].length ;
-        int[] visited = new int[numberOfNodes];
-        int[] path = new int[numberOfNodes];
-        int visits=0;
-        visited[0] = 1;
+        numberOfNodes = adjacencyMatrix[ 0 ].length;
+        int[] visited = new int[ numberOfNodes ];
+        int[] path = new int[ numberOfNodes ];
+        int visits = 0;
+        visited[ 0 ] = 1;
         stack.push(0);
         int element, dst = 0, i;
         int min = Integer.MAX_VALUE;
         boolean minFlag = false;
         System.out.print(0 + "\t");
-        path[visits]=0;
+        path[ visits ] = 0;
         visits++;
 
-        while (!stack.isEmpty())
-        {
+        while (!stack.isEmpty()) {
             element = stack.peek();
             i = 0;
             min = Integer.MAX_VALUE;
-            while (i < numberOfNodes)
-            {
-                if (adjacencyMatrix[element][i] > 0 && visited[i] == 0)
-                {
-                    if (min > adjacencyMatrix[element][i])
-                    {
-                        min = adjacencyMatrix[element][i];
+            while (i < numberOfNodes) {
+                if (adjacencyMatrix[ element ][ i ] > 0 && visited[ i ] == 0) {
+                    if (min > adjacencyMatrix[ element ][ i ]) {
+                        min = adjacencyMatrix[ element ][ i ];
                         dst = i;
                         minFlag = true;
                     }
                 }
                 i++;
             }
-            if (minFlag)
-            {
-                visited[dst] = 1;
+            if (minFlag) {
+                visited[ dst ] = 1;
                 stack.push(dst);
                 System.out.print((dst) + "\t");
 
-                path[visits]=dst;
+                path[ visits ] = dst;
                 visits++;
                 minFlag = false;
                 continue;
@@ -64,7 +59,7 @@ public class TSPNearestNeighbour {
         }
         System.out.println("\nTSP path:");
         for (int j = 0; j < path.length; j++) {
-            System.out.print((path[j]) + "\t");
+            System.out.print((path[ j ]) + "\t");
         }
         System.out.println("\nTSP completed!");
         return path;

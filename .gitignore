@@ -3,10 +3,10 @@
 .DS_Store
 /build
 
-.idea
-/*.iml
 
 /gradle
+.idea
+*.iml
 
 gradlew.bat
 gradlew
