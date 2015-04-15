@@ -23,7 +23,7 @@ public class TSPNearestNeighbourTest {
 
     private boolean pathStartsAtZero(int[] path) {
 
-        return path != null && path[0] == 0;
+        return path != null && path[ 0 ] == 0;
     }
 
     // checks that the path is valid nad is a Hemiltonian path - traverses all vertices only once
@@ -31,24 +31,22 @@ public class TSPNearestNeighbourTest {
 
         boolean is = path != null;
         if (is) {
-            int visits[] = new int[path.length];
+            int visits[] = new int[ path.length ];
             try {
                 for (int i = 0; i < path.length; i++) {
-                    if (visits[path[i]] == 1) {
+                    if (visits[ path[ i ] ] == 1) {
                         is = false;
                         break;
                     }
-                    visits[path[i]] = 1;
+                    visits[ path[ i ] ] = 1;
                 }
-            }
-            catch (IndexOutOfBoundsException e) {
+            } catch (IndexOutOfBoundsException e) {
                 e.printStackTrace();
                 // any out -of -bounds exception means the path is not valid
                 is = false;
-            }
-            finally {
+            } finally {
                 for (int i = 0; i < visits.length; i++) {
-                    is = is && visits[i] == 1;
+                    is = is && visits[ i ] == 1;
                 }
             }
         }
@@ -66,12 +64,12 @@ public class TSPNearestNeighbourTest {
 
         Random rand = new Random();
         int nodes = 100;
-        mGraph = new int[nodes][nodes];
+        mGraph = new int[ nodes ][ nodes ];
         for (int i = 0; i < nodes; i++) {
             for (int j = 0; j < nodes; j++) {
-                mGraph[i][j] = i == j ?
-                        0 :
-                        rand.nextInt(1000);
+                mGraph[ i ][ j ] = i == j ?
+                                   0 :
+                                   rand.nextInt(1000);
             }
         }
         System.out.println(System.currentTimeMillis());
@@ -90,13 +88,13 @@ public class TSPNearestNeighbourTest {
 
         Random rand = new Random();
         int nodes = 100;
-        mGraph = new int[nodes][nodes];
+        mGraph = new int[ nodes ][ nodes ];
         for (int i = 0; i < nodes; i++) {
             for (int j = 0; j < nodes; j++) {
-                mGraph[i][j] = i == j ?
-                        0 :
-                        rand.nextInt(1000);
-                mGraph[j][i] = mGraph[i][j];
+                mGraph[ i ][ j ] = i == j ?
+                                   0 :
+                                   rand.nextInt(1000);
+                mGraph[ j ][ i ] = mGraph[ i ][ j ];
             }
         }
         System.out.println(System.currentTimeMillis());
@@ -131,16 +129,16 @@ public class TSPNearestNeighbourTest {
         assertNotNull(result);
         assertEquals(10, result.length);
         // should be0	4	2	3	8	7	9	1	6	5
-        assertEquals(result[0], 0);
-        assertEquals(result[1], 4);
-        assertEquals(result[2], 2);
-        assertEquals(result[3], 3);
-        assertEquals(result[4], 8);
-        assertEquals(result[5], 7);
-        assertEquals(result[6], 9);
-        assertEquals(result[7], 1);
-        assertEquals(result[8], 6);
-        assertEquals(result[9], 5);
+        assertEquals(result[ 0 ], 0);
+        assertEquals(result[ 1 ], 4);
+        assertEquals(result[ 2 ], 2);
+        assertEquals(result[ 3 ], 3);
+        assertEquals(result[ 4 ], 8);
+        assertEquals(result[ 5 ], 7);
+        assertEquals(result[ 6 ], 9);
+        assertEquals(result[ 7 ], 1);
+        assertEquals(result[ 8 ], 6);
+        assertEquals(result[ 9 ], 5);
         assertTrue(pathStartsAtZero(result));
         assertTrue(pathIsHemilton(result));
 
@@ -171,7 +169,7 @@ public class TSPNearestNeighbourTest {
         // should be 0 1 2 3 4 5 6 7 8 9
         for (int i = 0; i < result.length; i++) {
 
-            assertEquals(result[i], i);
+            assertEquals(result[ i ], i);
         }
 
 

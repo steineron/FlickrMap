@@ -1,16 +1,17 @@
 package com.flickrmap.flickrmap.controller.fragments;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -19,44 +20,51 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageRequest;
+import com.flickrmap.flickrmap.FlickrMapIntents;
 import com.flickrmap.flickrmap.R;
 import com.flickrmap.flickrmap.controller.AppPhotoDetails;
-import com.flickrmap.flickrmap.controller.AppPhotosIntents;
+import com.flickrmap.flickrmap.controller.ControllerIntents;
 import com.flickrmap.flickrmap.model.GetPhotosService;
+import com.flickrmap.flickrmap.model.LongLatUtils;
+import com.flickrmap.flickrmap.model.TSPNearestNeighbour;
 import com.flickrmap.flickrmap.model.VolleyWrapper;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.googlecode.flickrjandroid.photos.GeoData;
 import com.googlecode.flickrjandroid.photos.Photo;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 
 import auto.parcel.AutoParcel;
 
 /**
  * Created by ron on 4/11/15.
  */
-public class PhotosMapFragment extends com.google.android.gms.maps.MapFragment implements
-        OnMapReadyCallback,
-        GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener,
-        GoogleMap.OnMyLocationButtonClickListener,
-        GetPhotosService.OnPhotosResultListener,
-        AppPhotosIntents.OnDisplayAppPhotosListener {
+public class PhotosMapFragment extends MapFragment implements
+                                                   OnMapReadyCallback,
+                                                   GoogleApiClient.ConnectionCallbacks,
+                                                   GoogleApiClient.OnConnectionFailedListener,
+                                                   GoogleMap.OnMyLocationButtonClickListener,
+                                                   GetPhotosService.OnPhotosResultListener,
+                                                   ControllerIntents.OnDisplayAppPhotoListener,
+                                                   ControllerIntents.OnClearAllPhotosListener {
 
     private static final String TAG = PhotosMapFragment.class.getSimpleName();
 
-    public static final String EVENT_PHOTOS_ADDED   = TAG + ".EVENT_PHOTOS_ADDED";
+    public static final String EVENT_PHOTOS_ADDED = TAG + ".EVENT_PHOTOS_ADDED";
 
     public static final String EVENT_PHOTOS_REMOVED = TAG + ".EVENT_PHOTOS_REMOVED";
 
@@ -73,6 +81,9 @@ public class PhotosMapFragment extends com.google.android.gms.maps.MapFragment i
 
     // a receiver to handle requests to display a photo on the map
     private BroadcastReceiver mDisplayAppPhotoReceiver;
+
+    // a receiver to handle requests to clear all photos from the map
+    private BroadcastReceiver mClearAllPhotosReceiver;
 
 
     /**
@@ -98,7 +109,7 @@ public class PhotosMapFragment extends com.google.android.gms.maps.MapFragment i
                 onMapPhotosCleared(context);
             }
             else {
-                AppPhotosIntents.Parser parser = new AppPhotosIntents.Parser(intent.getExtras());
+                FlickrMapIntents.Parser parser = new FlickrMapIntents.Parser(intent.getExtras());
                 Collection<AppPhotoDetails> photos = parser.getAppPhotosList();
                 if (EVENT_PHOTOS_ADDED.equals(action)) {
                     onMapPhotosAdded(context, photos);
@@ -113,8 +124,8 @@ public class PhotosMapFragment extends com.google.android.gms.maps.MapFragment i
     public static BroadcastReceiver registerOnMapPhotosChangeListener(final Context context,
                                                                       final OnMapPhotosChangeListener listener) {
 
-        BroadcastReceiver receiver=null;
-        if (listener!=null) {
+        BroadcastReceiver receiver = null;
+        if (listener != null) {
             IntentFilter filter = new IntentFilter();
             filter.addAction(EVENT_PHOTOS_ADDED);
             filter.addAction(EVENT_PHOTOS_REMOVED);
@@ -122,23 +133,28 @@ public class PhotosMapFragment extends com.google.android.gms.maps.MapFragment i
             receiver = new OnMapPhotosChangeReceiver() {
 
                 @Override
-                public void onMapPhotosAdded(final Context context, final Collection<AppPhotoDetails> photos) {
-                    listener.onMapPhotosAdded(context,photos);
+                public void onMapPhotosAdded(final Context context,
+                                             final Collection<AppPhotoDetails> photos) {
+
+                    listener.onMapPhotosAdded(context, photos);
                 }
 
                 @Override
-                public void onMapPhotosRemoved(final Context context, final Collection<AppPhotoDetails> photos) {
-                    listener.onMapPhotosRemoved(context,photos);
+                public void onMapPhotosRemoved(final Context context,
+                                               final Collection<AppPhotoDetails> photos) {
+
+                    listener.onMapPhotosRemoved(context, photos);
                 }
 
                 @Override
                 public void onMapPhotosCleared(final Context context) {
+
                     listener.onMapPhotosCleared(context);
                 }
             };
-            context.registerReceiver(receiver,filter);
+            context.registerReceiver(receiver, filter);
         }
-        return  receiver;
+        return receiver;
     }
 
     @Override
@@ -160,13 +176,18 @@ public class PhotosMapFragment extends com.google.android.gms.maps.MapFragment i
         super.onResume();
         mGoogleApiClient.connect();
 
+        Activity context = getActivity();
         // register a listener to handle retrieval of photos
         mPhotosResultsReceiver =
-                GetPhotosService.registerOnPhotosResultListener(getActivity(), this);
+                GetPhotosService.registerOnPhotosResultListener(context, this);
 
         //register a listener to handle requests to display a photo on the map
         mDisplayAppPhotoReceiver =
-                AppPhotosIntents.registerDisplayAppPhotosListener(getActivity(), this);
+                ControllerIntents.registerDisplayAppPhotosListener(context, this);
+
+        //register a listener to handle requests to clear all photos on the map
+        mClearAllPhotosReceiver =
+                ControllerIntents.registerClearAllPhotosListener(context, this);
 
         //start loading the map
         getMapAsync(this);
@@ -178,36 +199,22 @@ public class PhotosMapFragment extends com.google.android.gms.maps.MapFragment i
 
         super.onPause();
         mGoogleApiClient.disconnect();
+        Activity activity = getActivity();
         try {
-            getActivity().unregisterReceiver(mDisplayAppPhotoReceiver);
-        }
-        catch (Exception e) {
+            activity.unregisterReceiver(mDisplayAppPhotoReceiver);
+        } catch (Exception e) {
             e.printStackTrace();
         }
         try {
-            getActivity().unregisterReceiver(mPhotosResultsReceiver);
-        }
-        catch (Exception e) {
+            activity.unregisterReceiver(mPhotosResultsReceiver);
+        } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_clear) {
-            removeAllMarkers();
-            Toast.makeText(getActivity(), R.string.feedback_marker_cleared, Toast.LENGTH_LONG).show();
-            return true;
+        try {
+            activity.unregisterReceiver(mClearAllPhotosReceiver);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        return super.onOptionsItemSelected(item);
     }
 
 
@@ -238,7 +245,8 @@ public class PhotosMapFragment extends com.google.android.gms.maps.MapFragment i
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
-        Toast.makeText(getActivity(), R.string.error_connecting_api_client, Toast.LENGTH_SHORT).show();
+        Toast.makeText(getActivity(), R.string.error_connecting_api_client, Toast.LENGTH_SHORT)
+                .show();
 
     }
 
@@ -264,14 +272,16 @@ public class PhotosMapFragment extends com.google.android.gms.maps.MapFragment i
     @Override
     public void onFault(Context context) {
 
-        Toast.makeText(getActivity(), R.string.error_photos_retrieve, Toast.LENGTH_SHORT).show();
+        Toast.makeText(getActivity(), R.string.error_photos_retrieve, Toast.LENGTH_SHORT)
+                .show();
     }
 
     /**
-     * implementing {@link com.flickrmap.flickrmap.controller.AppPhotosIntents.OnDisplayAppPhotosListener}
+     * implementing {@link com.flickrmap.flickrmap.controller.ControllerIntents.OnDisplayAppPhotoListener}
      */
     @Override
-    public void onDisplayAppPhoto(final Collection<AppPhotoDetails> photosDetails) {
+    public void onDisplayAppPhoto(final Context context,
+                                  final Collection<AppPhotoDetails> photosDetails) {
 
         if (photosDetails != null && mAppPhotosMap != null) {
             for (AppPhotoDetails photoDetails : photosDetails) {
@@ -286,6 +296,15 @@ public class PhotosMapFragment extends com.google.android.gms.maps.MapFragment i
             }
         }
     }
+
+    @Override
+    public void onClearAllPhotos(final Context context) {
+
+        removeAllMarkers();
+        Toast.makeText(getActivity(), R.string.feedback_marker_cleared, Toast.LENGTH_LONG)
+                .show();
+    }
+
 
     private Location getCurrentLocation() {
 
@@ -319,8 +338,8 @@ public class PhotosMapFragment extends com.google.android.gms.maps.MapFragment i
                         .createGetPhotosByLocationServiceIntent(
                                 getActivity(),
                                 location != null ?
-                                        location :
-                                        getCurrentLocation(),
+                                location :
+                                getCurrentLocation(),
                                 100));
     }
 
@@ -333,6 +352,14 @@ public class PhotosMapFragment extends com.google.android.gms.maps.MapFragment i
         // re-populate makers
         mAppPhotosMap = new HashMap<String, AppPhotoDetailsImpl>(); // will clear older references
         int n = 0;
+        final ArrayList<LatLng> positions = new ArrayList<>(); // the positions assigned on the map
+
+        // while on it - find the smallest latitude/ longitude values - use them later for TSP's adjacency matrix
+        double minLat = Double.MAX_VALUE;
+        double minLng = Double.MAX_VALUE;
+        double maxLat = Double.MIN_VALUE;
+        double maxLng = Double.MIN_VALUE;
+
         for (Photo photo : photos) {
             try {
                 GeoData geoData = photo.getGeoData();
@@ -350,22 +377,91 @@ public class PhotosMapFragment extends com.google.android.gms.maps.MapFragment i
                 // keep a mapping from marker to photo-bundle so events identified by the marker's id can be related to a photo's details
                 mAppPhotosMap.put(markerId, appPhotoDetails);
 
-            }
-            catch (Exception e) {
+                positions.add(position);
+                minLat = Math.min(position.latitude, minLat);
+                minLng = Math.min(position.longitude, minLng);
+                maxLat = Math.max(position.latitude, minLat);
+                maxLng = Math.max(position.longitude, minLng);
+
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+
+        //create teh adjacency matrix from the positions
+        int nodes = positions.size();
+
+        final LatLng startAt =
+                new LatLng(0.5 * (maxLat - minLat) + minLat, 0.5 * (maxLng - minLng) + minLng);
+
+        Collections.sort(positions, new Comparator<LatLng>() {
+
+            @Override
+            public int compare(final LatLng lhs, final LatLng rhs) {
+
+
+                return LongLatUtils.calculateDistance(startAt, lhs) >
+                               LongLatUtils.calculateDistance(startAt, rhs) ?
+                       -1 :
+                       1;
+            }
+        });
+
+        double[][] adjacencyMatrix = new double[ nodes ][ nodes ];
+
+        double distance;
+
+        for (int i = 0; i < nodes; i++) {
+            for (int j = i; j < nodes; j++) {
+                if (i != j) {
+                    distance = LongLatUtils.calculateDistance(positions.get(i), positions.get(j));
+
+                    adjacencyMatrix[ i ][ j ] = distance;
+                    adjacencyMatrix[ j ][ i ] = distance;
+                }
+                else {
+                    adjacencyMatrix[ i ][ j ] = 0.0;
+
+                }
+                System.out.print(String.format("%.2f\t", adjacencyMatrix[ i ][ j ]));
+            }
+            System.out.print("\n");
+        }
+
+        // a list of indexes in array positions[]
+        int path[] = new TSPNearestNeighbour().tsp(adjacencyMatrix);
+
+
+      /*  int[] colors =
+                new int[]{Color.BLACK, Color.RED, Color.GREEN, Color.BLUE, Color.DKGRAY, Color.MAGENTA};
+        for (int i = 1; i < nodes; i++) {
+            PolylineOptions mapPath = new PolylineOptions().width(4.0f)
+                    .color(colors[ (i - 1) % 6 ])
+                    .add(positions.get(i - 1))
+                    .add(positions.get(i));
+            getMap().addPolyline(mapPath);
+        }*/
+
+
+        PolylineOptions mapPath = new PolylineOptions().width(4.0f)
+                .color(Color.BLUE);
+
+        for (int i = 0; i < nodes; i++) {
+            mapPath = mapPath.add(positions.get(i));
+        }
+        getMap().addPolyline(mapPath);
+
 
     }
 
     private AppPhotoDetailsImpl createAppPhotoDetails(Marker marker, Photo photo) {
 
         return AppPhotoDetailsImpl.create(marker.getId(),
-                                          marker,
-                                          photo.getSmallSquareUrl(), // should be 75x75
-                                          photo.getMediumUrl(),
-                                          photo.getTitle(),
-                                          photo.getDescription());
+                marker,
+                photo.getSmallSquareUrl(), // should be 75x75
+                photo.getMediumUrl(),
+                photo.getTitle(),
+                photo.getDescription());
     }
 
 
@@ -383,12 +479,16 @@ public class PhotosMapFragment extends com.google.android.gms.maps.MapFragment i
     }
 
 
-    private void notifyPhotosAddedToMap(){
-        AppPhotosIntents.Builder builder = new AppPhotosIntents.Builder(getActivity())
+    private void notifyPhotosAddedToMap() {
+
+        FlickrMapIntents.Builder builder = new FlickrMapIntents.Builder(getActivity())
                 .withAppPhotos(mAppPhotosMap.values());
-        getActivity().sendBroadcast(builder.build().setAction(EVENT_PHOTOS_ADDED));
+        getActivity().sendBroadcast(builder.build()
+                .setAction(EVENT_PHOTOS_ADDED));
     }
+
     private void notifyMapPhotosCleared() {
+
         getActivity().sendBroadcast(new Intent(EVENT_PHOTOS_CLEARED));
     }
 
@@ -397,7 +497,7 @@ public class PhotosMapFragment extends com.google.android.gms.maps.MapFragment i
      * the current activity creates and manages instances of this class.
      * <p/>
      * each instance is coupled to a maker on the map and mapped using {@link com.google.android.gms.maps.model.Marker :getId}.
-     * the mapping takes place via {@value PhotosMapFragment:mAppPhotosMap}
+     * the mapping takes place via {@value PhotosMapFragment :mAppPhotosMap}
      * <p/>
      * this instance also keeps a bitmap of the iamge if it was retrieved.
      */
@@ -435,11 +535,11 @@ public class PhotosMapFragment extends com.google.android.gms.maps.MapFragment i
                 @Nullable String largeUrl,
                 @Nullable String title,
                 @Nullable String description
-        ) {
+                                         ) {
 
             AppPhotoDetailsImpl details =
                     new AutoParcel_PhotosMapFragment_AppPhotoDetailsImpl(markerId, thumbnailUrl, largeUrl, title,
-                                                                         description);
+                            description);
             details.setMarker(mapMarker);
             return details;
         }
@@ -490,23 +590,23 @@ public class PhotosMapFragment extends com.google.android.gms.maps.MapFragment i
             ImageRequest imageRequest = null;
             if (photo != null) {
                 imageRequest = new ImageRequest(photo.getLargeSizeUrl(),
-                                                new Response.Listener<Bitmap>() {
+                        new Response.Listener<Bitmap>() {
 
-                                                    @Override
-                                                    public void onResponse(Bitmap bitmap) {
+                            @Override
+                            public void onResponse(Bitmap bitmap) {
 
-                                                        photo.setLargeBitmap(bitmap);
-                                                        marker.showInfoWindow();
-                                                    }
+                                photo.setLargeBitmap(bitmap);
+                                marker.showInfoWindow();
+                            }
 
-                                                }, 0, 0, ImageView.ScaleType.CENTER_CROP, null,
-                                                new Response.ErrorListener() {
+                        }, 0, 0, ImageView.ScaleType.CENTER_CROP, null,
+                        new Response.ErrorListener() {
 
-                                                    public void onErrorResponse(VolleyError error) {
+                            public void onErrorResponse(VolleyError error) {
 
-                                                        //TODO: handle the error properly - display error image
-                                                    }
-                                                });
+                                //TODO: handle the error properly - display error image
+                            }
+                        });
                 // launch the request
                 VolleyWrapper.getInstance(getActivity())
                         .addToRequestQueue(imageRequest);

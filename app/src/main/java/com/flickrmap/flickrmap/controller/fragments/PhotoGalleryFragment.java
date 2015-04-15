@@ -22,7 +22,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageRequest;
 import com.flickrmap.flickrmap.R;
 import com.flickrmap.flickrmap.controller.AppPhotoDetails;
-import com.flickrmap.flickrmap.controller.AppPhotosIntents;
+import com.flickrmap.flickrmap.controller.ControllerIntents;
 import com.flickrmap.flickrmap.model.VolleyWrapper;
 import com.flickrmap.flickrmap.view.HorizontalSpaceDecorator;
 
@@ -35,7 +35,7 @@ import java.util.Collection;
  * Use the {@link PhotoGalleryFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.OnMapPhotosChangeListener{
+public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.OnMapPhotosChangeListener {
 
 
     private RecyclerView mGalleryView;
@@ -71,7 +71,8 @@ public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.
     public void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-        mMapPhotosChangedReceiver = PhotosMapFragment.registerOnMapPhotosChangeListener(getActivity(), this);
+        mMapPhotosChangedReceiver =
+                PhotosMapFragment.registerOnMapPhotosChangeListener(getActivity(), this);
 
     }
 
@@ -103,8 +104,7 @@ public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.
 
         try {
             getActivity().unregisterReceiver(mMapPhotosChangedReceiver);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
 
         }
         super.onDestroy();
@@ -112,20 +112,23 @@ public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.
 
     @Override
     public void onMapPhotosAdded(final Context context, final Collection<AppPhotoDetails> photos) {
+
         setPhotosList(photos);
-        if(mGalleryView!=null){
+        if (mGalleryView != null) {
             mGalleryView.setAdapter(new PhotoGalleryAdapter());
         }
     }
 
     @Override
-    public void onMapPhotosRemoved(final Context context, final Collection<AppPhotoDetails> photos) {
+    public void onMapPhotosRemoved(final Context context,
+                                   final Collection<AppPhotoDetails> photos) {
 
     }
 
     @Override
     public void onMapPhotosCleared(final Context context) {
-        if(mGalleryView!=null){
+
+        if (mGalleryView != null) {
             mGalleryView.setAdapter(null);
         }
     }
@@ -197,7 +200,7 @@ public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.
                         @Override
                         public void onClick(final View v) {
 
-                            getActivity().sendBroadcast(AppPhotosIntents
+                            getActivity().sendBroadcast(ControllerIntents
                                     .createDisplayAppPhotoIntent(getActivity(), photo));
                         }
                     });

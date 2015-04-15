@@ -2,7 +2,6 @@ package com.flickrmap.flickrmap.model;
 
 import android.location.Location;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 
 import com.flickrmap.flickrmap.BuildConfig;
@@ -18,7 +17,7 @@ import java.util.HashSet;
 
 /**
  * an AsyncTask for retrieving Flickr images based on geo-location
- *
+ * <p/>
  * Created by ron on 4/9/15.
  */
 class FlickrGeoSearchTask extends AsyncTask<Bundle, Void, PhotoList> {
@@ -53,7 +52,7 @@ class FlickrGeoSearchTask extends AsyncTask<Bundle, Void, PhotoList> {
         PhotoList photos = new PhotoList();
         if (searchParams != null) {
             try {
-                PhotosIntents.Parser parser = new PhotosIntents.Parser(searchParams);
+                GetPhotosIntents.Parser parser = new GetPhotosIntents.Parser(searchParams);
                 Location searchLocation = parser.getSearchLocation();
                 int maxResults = parser.getMaxResults();
                 Flickr flickr = new Flickr(BuildConfig.FLICKR_API_KEY);

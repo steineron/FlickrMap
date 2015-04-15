@@ -55,7 +55,7 @@ dependencies {
     // AutoParcel, AutoValue
     compile 'com.github.frankiesardo:auto-parcel:0.3'
     apt 'com.github.frankiesardo:auto-parcel-processor:0.3'
-    provided 'com.google.auto.value:auto-value:1.0'
+//    provided 'com.google.auto.value:auto-value:1.0'
 
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:22.0.0'
