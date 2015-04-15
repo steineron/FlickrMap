@@ -21,12 +21,14 @@ import java.util.Collection;
  * it also listens to changes in the map fragment and manipulated the gallery fragment as needed
  */
 public class MainActivity extends Activity implements
-        PhotosMapFragment.OnMapPhotosChangeListener {
+                                           PhotosMapFragment.OnMapPhotosChangeListener {
 
+    // the map and gallery fragments:
     private MapFragment mMapFragment;
 
     private PhotoGalleryFragment mPhotoGalleryFragment;
 
+    // a receiver to listen to changes in the map's photos
     private BroadcastReceiver mMapPhotosChangedReceiver;
 
     @Override
@@ -37,7 +39,6 @@ public class MainActivity extends Activity implements
         //register a listener to handle changes to photos (markers) on the map
         mMapPhotosChangedReceiver =
                 PhotosMapFragment.registerOnMapPhotosChangeListener(this, this);
-
 
         if (savedInstanceState == null) {
             // add the map fragment, load the map.
@@ -54,8 +55,7 @@ public class MainActivity extends Activity implements
 
         try {
             unregisterReceiver(mMapPhotosChangedReceiver);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
 
         }
         super.onDestroy();
@@ -94,12 +94,6 @@ public class MainActivity extends Activity implements
                             R.anim.fragment_exit) // pop-exit
                     .commit();
         }
-    }
-
-    @Override
-    public void onMapPhotosRemoved(final Context context,
-                                   final Collection<AppPhotoDetails> photos) {
-
     }
 
     @Override

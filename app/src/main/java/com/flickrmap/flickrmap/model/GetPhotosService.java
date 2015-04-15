@@ -16,6 +16,9 @@ import com.googlecode.flickrjandroid.photos.PhotoList;
 import java.util.ArrayList;
 
 /**
+ *
+ * the service that manages the task to retrieve images for the application
+ *
  * Created by ron on 4/10/15.
  */
 public class GetPhotosService extends Service {
@@ -37,6 +40,7 @@ public class GetPhotosService extends Service {
     }
 
 
+    // create an intent to start this service with location and page size parameters
     public static Intent createGetPhotosByLocationServiceIntent(Context context, Location location,
                                                                 int maxPhotos) {
 
@@ -49,6 +53,7 @@ public class GetPhotosService extends Service {
 
     }
 
+    // register a listener to teh result (success/ fault) of the retrieval task
     public static BroadcastReceiver registerOnPhotosResultListener(final Context context,
                                                                    final OnPhotosResultListener listener) {
 

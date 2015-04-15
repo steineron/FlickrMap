@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 /**
+ * a horizontal list of thumbnails - a gallery.
+ *
  * Created by rosteiner on 4/15/15.
  */
 public class HorizontalThumbsGalleryView extends RecyclerView implements AppPhotosGallery {
@@ -195,8 +197,7 @@ public class HorizontalThumbsGalleryView extends RecyclerView implements AppPhot
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void revealView(View view) {
-        // this groovy effect requires Android 5.0 and above
-
+        // this groovy effect to reveal the thumbnail. requires Android 5.0 and above
         if (view != null) {
             float radius =
                     Math.max(view.getMeasuredHeight(), view.getMeasuredWidth());
@@ -218,6 +219,7 @@ public class HorizontalThumbsGalleryView extends RecyclerView implements AppPhot
     }
 
     /**
+     * a decorator to space thumbnail in the gallery
      * Created by ron on 4/10/15.
      */
     public static class HorizontalSpaceDecorator extends ItemDecoration {

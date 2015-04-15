@@ -71,8 +71,6 @@ public class PhotosMapFragment extends MapFragment implements
 
     public static final String EVENT_PHOTOS_ADDED = TAG + ".EVENT_PHOTOS_ADDED";
 
-    public static final String EVENT_PHOTOS_REMOVED = TAG + ".EVENT_PHOTOS_REMOVED";
-
     public static final String EVENT_PHOTOS_CLEARED = TAG + ".EVENT_PHOTOS_CLEARED";
 
     public static final int INITIAL_ZOOM = 12; // this should provide a ~15KM radius
@@ -105,8 +103,6 @@ public class PhotosMapFragment extends MapFragment implements
 
         void onMapPhotosAdded(Context context, Collection<AppPhotoDetails> photos);
 
-        void onMapPhotosRemoved(Context context, Collection<AppPhotoDetails> photos);
-
         void onMapPhotosCleared(Context context);
     }
 
@@ -128,9 +124,7 @@ public class PhotosMapFragment extends MapFragment implements
                 if (EVENT_PHOTOS_ADDED.equals(action)) {
                     onMapPhotosAdded(context, photos);
                 }
-                else if (EVENT_PHOTOS_REMOVED.equals(action)) {
-                    onMapPhotosRemoved(context, photos);
-                }
+
             }
         }
     }
@@ -144,7 +138,6 @@ public class PhotosMapFragment extends MapFragment implements
         if (listener != null) {
             IntentFilter filter = new IntentFilter();
             filter.addAction(EVENT_PHOTOS_ADDED);
-            filter.addAction(EVENT_PHOTOS_REMOVED);
             filter.addAction(EVENT_PHOTOS_CLEARED);
             receiver = new OnMapPhotosChangeReceiver() {
 
@@ -153,13 +146,6 @@ public class PhotosMapFragment extends MapFragment implements
                                              final Collection<AppPhotoDetails> photos) {
 
                     listener.onMapPhotosAdded(context, photos);
-                }
-
-                @Override
-                public void onMapPhotosRemoved(final Context context,
-                                               final Collection<AppPhotoDetails> photos) {
-
-                    listener.onMapPhotosRemoved(context, photos);
                 }
 
                 @Override

@@ -24,13 +24,16 @@ import java.util.Collection;
  * create an instance of this fragment.
  */
 public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.OnMapPhotosChangeListener,
-        AppPhotosGallery.OnGalleryItemClickListener {
+                                                              AppPhotosGallery.OnGalleryItemClickListener {
 
 
+    // the gallery renderer/view
     private AppPhotosGallery mPhotosGallery;
 
+    // the list of photo details
     private ArrayList<AppPhotoDetails> mPhotosList;
 
+    // listener to changes in the photos on the map (added/ cleared)
     private BroadcastReceiver mMapPhotosChangedReceiver;
 
     /**
@@ -79,8 +82,6 @@ public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.
         mPhotosGallery = (AppPhotosGallery) view.findViewById(R.id.thumbs_gallery);
         mPhotosGallery.setOnGalleryItemClickListener(this);
         mPhotosGallery.setAppPhotos(mPhotosList);
-
-
     }
 
     @Override
@@ -104,12 +105,6 @@ public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.
     }
 
     @Override
-    public void onMapPhotosRemoved(final Context context,
-                                   final Collection<AppPhotoDetails> photos) {
-
-    }
-
-    @Override
     public void onMapPhotosCleared(final Context context) {
 
         if (mPhotosGallery != null) {
@@ -123,6 +118,6 @@ public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.
 
         Activity activity = getActivity();
         activity.sendBroadcast(ControllerIntents
-                                       .createDisplayAppPhotoIntent(activity, photo));
+                .createDisplayAppPhotoIntent(activity, photo));
     }
 }

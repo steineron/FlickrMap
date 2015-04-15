@@ -1,13 +1,19 @@
 package com.flickrmap.flickrmap.model;
 
 /**
- * taken from /**
- * Copied from http://www.sanfoundry.com/java-program-implement-traveling-salesman-problem-using-nearest-neighbour-algorithm/
- * <p/>
+ *
+ * the class taht calculates the hamiltonian path that travels as 'lightly' as possible in the graph described by the adjacency matrix.
+ * TSP - Traveling Salesman Problen is in NP-hard so this algorithm does not guarantee the best solution.
+ * however - teh NN (Nearest Neighbor) approach is guarantied to complete in polinommial time and provide a path that is at most 1.5 time 'heavier'
+ * than the lightest path.
+ *
+ * implementation is taken from
  * https://code.google.com/p/tspPath-ikm-java/source/browse/trunk/TSP/src/NearestNeighbor.java?r=3
  */
 
 public class TSPNearestNeighbor implements TSPPath {
+
+    // find the path using nearest neighbor approach. the item at '0' index is the starting node.
 
     @Override
     public int[] tspPath(final double[][] adjacencyMatrix) {
