@@ -4,6 +4,9 @@ import java.util.Stack;
 
 /**
  * Copied from http://www.sanfoundry.com/java-program-implement-traveling-salesman-problem-using-nearest-neighbour-algorithm/
+ *
+ * https://code.google.com/p/tsp-ikm-java/source/browse/trunk/TSP/src/NearestNeighbor.java?r=3
+ *
  */
 public class TSPNearestNeighbour {
 
