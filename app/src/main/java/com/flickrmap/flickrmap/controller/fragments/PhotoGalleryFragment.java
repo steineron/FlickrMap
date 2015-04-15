@@ -1,31 +1,18 @@
 package com.flickrmap.flickrmap.controller.fragments;
 
-import android.animation.Animator;
-import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
-import android.view.animation.AnimationUtils;
-import android.widget.Button;
-import android.widget.ImageView;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageRequest;
 import com.flickrmap.flickrmap.R;
 import com.flickrmap.flickrmap.controller.AppPhotoDetails;
 import com.flickrmap.flickrmap.controller.ControllerIntents;
-import com.flickrmap.flickrmap.model.VolleyWrapper;
-import com.flickrmap.flickrmap.view.HorizontalSpaceDecorator;
+import com.flickrmap.flickrmap.view.AppPhotosGallery;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,10 +23,11 @@ import java.util.Collection;
  * Use the {@link PhotoGalleryFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.OnMapPhotosChangeListener {
+public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.OnMapPhotosChangeListener,
+        AppPhotosGallery.OnGalleryItemClickListener {
 
 
-    private RecyclerView mGalleryView;
+    private AppPhotosGallery mPhotosGallery;
 
     private ArrayList<AppPhotoDetails> mPhotosList;
 
@@ -88,15 +76,10 @@ public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.
     public void onViewCreated(View view, Bundle savedInstanceState) {
 
         super.onViewCreated(view, savedInstanceState);
-        mGalleryView = (RecyclerView) view.findViewById(R.id.thumbs_gallery);
-        mGalleryView.setHasFixedSize(true);
+        mPhotosGallery = (AppPhotosGallery) view.findViewById(R.id.thumbs_gallery);
+        mPhotosGallery.setOnGalleryItemClickListener(this);
+        mPhotosGallery.setAppPhotos(mPhotosList);
 
-        // use a linear layout manager
-        LinearLayoutManager layoutManager =
-                new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, false);
-        mGalleryView.setLayoutManager(layoutManager);
-        mGalleryView.addItemDecoration(new HorizontalSpaceDecorator(getResources().getInteger(R.integer.gallery_space_half_size)));
-        mGalleryView.setAdapter(new PhotoGalleryAdapter());
 
     }
 
@@ -115,8 +98,8 @@ public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.
     public void onMapPhotosAdded(final Context context, final Collection<AppPhotoDetails> photos) {
 
         setPhotosList(photos);
-        if (mGalleryView != null) {
-            mGalleryView.setAdapter(new PhotoGalleryAdapter());
+        if (mPhotosGallery != null) {
+            mPhotosGallery.setAppPhotos(mPhotosList);
         }
     }
 
@@ -129,135 +112,17 @@ public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.
     @Override
     public void onMapPhotosCleared(final Context context) {
 
-        if (mGalleryView != null) {
-            mGalleryView.setAdapter(null);
+        if (mPhotosGallery != null) {
+            mPhotosGallery.setAppPhotos(null);
         }
     }
 
-    private class GalleryViewHolder extends RecyclerView.ViewHolder {
 
-        protected final ImageView mImageView;
+    @Override
+    public void onGalleryItemClick(final AppPhotoDetails photo) {
 
-
-        protected ImageRequest mImageRequest;
-
-        public GalleryViewHolder(View itemView) {
-
-            super(itemView);
-            mImageView = (ImageView) itemView.findViewById(R.id.thumb_image);
-        }
-    }
-
-    private class PhotoGalleryAdapter extends RecyclerView.Adapter<GalleryViewHolder> {
-
-        @Override
-        public GalleryViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-
-            final GalleryViewHolder galleryViewHolder = new GalleryViewHolder(LayoutInflater.from(parent.getContext())
-                                                                                .inflate(
-                                                                                        R.layout.gallery_thumb_view,
-                                                                                        parent,
-                                                                                        false));
-            galleryViewHolder.mImageView.setOnClickListener(new View.OnClickListener() {
-
-                @Override
-                public void onClick(final View v) {
-
-                    AppPhotoDetails photo = mPhotosList.get(galleryViewHolder.getAdapterPosition());
-                    getActivity().sendBroadcast(ControllerIntents
-                                                        .createDisplayAppPhotoIntent(getActivity(), photo));
-                }
-            });
-            return galleryViewHolder;
-        }
-
-        @Override
-        public void onBindViewHolder(final GalleryViewHolder holder, int position) {
-
-            try {
-                final AppPhotoDetails photo = mPhotosList.get(position);
-
-                holder.mImageView.setImageBitmap(/*R.drawable.image_load_error*/ null);
-                holder.mImageView.setVisibility(View.INVISIBLE);
-                if (photo != null) {
-                    // Retrieves an image specified by the URL, displays it in the UI.
-                    holder.mImageRequest = new ImageRequest(photo.getThumbnailUrl(),
-                                                            new Response.Listener<Bitmap>() {
-
-                                                                @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-                                                                @Override
-                                                                public void onResponse(Bitmap bitmap) {
-
-                                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
-                                                                            holder.mImageView.isAttachedToWindow()) {
-                                                                        revealView(holder.itemView);
-                                                                    }
-                                                                    holder.mImageView.setImageBitmap(bitmap);
-                                                                    holder.mImageView.setVisibility(View.VISIBLE);
-                                                                }
-
-                                                            }, 0, 0, ImageView.ScaleType.CENTER_CROP, null,
-                                                            new Response.ErrorListener() {
-
-                                                                public void onErrorResponse(VolleyError error) {
-
-                                                                    //TODO: handle the error properly
-                                                                    holder.mImageView.setImageBitmap(/*R.drawable.image_load_error*/
-                                                                                                     null);
-                                                                }
-                                                            });
-                    // launch the request
-                    VolleyWrapper.getInstance(getActivity())
-                            .addToRequestQueue(holder.mImageRequest);
-
-                }
-            }
-            catch (Exception e) {
-
-            }
-            AppPhotoDetails photo = null;
-
-        }
-
-        @Override
-        public void onViewRecycled(GalleryViewHolder holder) {
-
-            holder.mImageView.setImageBitmap(null);
-            holder.mImageRequest.cancel();
-            super.onViewRecycled(holder);
-        }
-
-        @Override
-        public int getItemCount() {
-
-            return mPhotosList == null ?
-                    0 :
-                    mPhotosList.size();
-        }
-
-    }
-
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private void revealView(View view) {
-        // this groovy effect requires Android 5.0 and above
-
-        if (view != null) {
-            float radius =
-                    Math.max(view.getMeasuredHeight(), view.getMeasuredWidth());
-
-            Animator reveal = ViewAnimationUtils.createCircularReveal(
-                    view,           // The  View to reveal
-                    Math.round(
-                            radius *
-                                    0.5f),      // x to start the mask from - start from the middle
-                    Math.round(
-                            radius),      // y to start the mask from - start from the bottom
-                    0f,                          // radius of the starting mask
-                    radius);                     // radius of the final mask
-            reveal.setDuration(150L)
-                    .setInterpolator(AnimationUtils.loadInterpolator(getActivity(),
-                            android.R.interpolator.linear_out_slow_in));
-            reveal.start();
-        }
+        Activity activity = getActivity();
+        activity.sendBroadcast(ControllerIntents
+                                       .createDisplayAppPhotoIntent(activity, photo));
     }
 }

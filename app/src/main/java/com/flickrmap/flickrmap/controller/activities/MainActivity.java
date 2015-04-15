@@ -21,7 +21,7 @@ import java.util.Collection;
  * it also listens to changes in the map fragment and manipulated the gallery fragment as needed
  */
 public class MainActivity extends Activity implements
-                                                    PhotosMapFragment.OnMapPhotosChangeListener {
+        PhotosMapFragment.OnMapPhotosChangeListener {
 
     private MapFragment mMapFragment;
 
@@ -54,7 +54,8 @@ public class MainActivity extends Activity implements
 
         try {
             unregisterReceiver(mMapPhotosChangedReceiver);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
 
         }
         super.onDestroy();
@@ -69,13 +70,8 @@ public class MainActivity extends Activity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_clear) {
+        // Handle action bar item clicks here.
+        if (item.getItemId() == R.id.action_clear) {
             sendBroadcast(ControllerIntents.createClearAllPhotosIntent(this));
             return true;
         }
@@ -87,10 +83,15 @@ public class MainActivity extends Activity implements
     @Override
     public void onMapPhotosAdded(final Context context, final Collection<AppPhotoDetails> photos) {
 
+        // photos where added to map - add the thumbnails gallery
         if (mPhotoGalleryFragment == null) {
             mPhotoGalleryFragment = PhotoGalleryFragment.newInstance(photos);
             getFragmentManager().beginTransaction()
                     .add(R.id.container, mPhotoGalleryFragment)
+                    .setCustomAnimations(R.anim.fragment_enter, // enter
+                                         R.anim.fragment_exit, // exit
+                                         R.anim.fragment_enter, // pop-enter
+                                         R.anim.fragment_exit) // pop-exit
                     .commit();
         }
     }
@@ -116,6 +117,10 @@ public class MainActivity extends Activity implements
         if (mPhotoGalleryFragment != null) {
             getFragmentManager().beginTransaction()
                     .remove(mPhotoGalleryFragment)
+                    .setCustomAnimations(R.anim.fragment_enter, // enter
+                                         R.anim.fragment_exit, // exit
+                                         R.anim.fragment_enter, // pop-enter
+                                         R.anim.fragment_exit) // pop-exit
                     .commit();
             mPhotoGalleryFragment = null;
         }

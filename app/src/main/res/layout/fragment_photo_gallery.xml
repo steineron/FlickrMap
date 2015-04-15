@@ -5,16 +5,11 @@
              android:layout_gravity="bottom"
              tools:context="com.flickrmap.flickrmap.controller.fragments.PhotoGalleryFragment">
 
-    <!--<android.support.v17.leanback.widget.HorizontalGridView-->
-    <android.support.v7.widget.RecyclerView
+    <com.flickrmap.flickrmap.view.HorizontalThumbsGalleryView
         android:id="@+id/thumbs_gallery"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:focusable="true"
-        android:clickable="true"
-        >
-
-    </android.support.v7.widget.RecyclerView>
-    <!--</android.support.v17.leanback.widget.HorizontalGridView>-->
+        android:clickable="true"/>
 
 </FrameLayout>
