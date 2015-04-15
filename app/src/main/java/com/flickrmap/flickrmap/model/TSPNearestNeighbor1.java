@@ -5,21 +5,19 @@ import java.util.Stack;
 /**
  * Copied from http://www.sanfoundry.com/java-program-implement-traveling-salesman-problem-using-nearest-neighbour-algorithm/
  *
- * https://code.google.com/p/tsp-ikm-java/source/browse/trunk/TSP/src/NearestNeighbor.java?r=3
- *
  */
-public class TSPNearestNeighbour {
+public class TSPNearestNeighbor1 implements TSPPath{
 
     private int numberOfNodes;
 
     private Stack<Integer> stack;
 
-    public TSPNearestNeighbour() {
+    public TSPNearestNeighbor1() {
 
         stack = new Stack<Integer>();
     }
 
-    public int[] tsp(double adjacencyMatrix[][]) {
+    public int[] tspPath(double adjacencyMatrix[][]) {
 
         numberOfNodes = adjacencyMatrix[ 0 ].length;
         int[] visited = new int[ numberOfNodes ];

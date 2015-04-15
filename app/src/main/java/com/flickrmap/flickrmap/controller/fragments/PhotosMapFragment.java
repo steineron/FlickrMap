@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -26,7 +25,8 @@ import com.flickrmap.flickrmap.controller.AppPhotoDetails;
 import com.flickrmap.flickrmap.controller.ControllerIntents;
 import com.flickrmap.flickrmap.model.GetPhotosService;
 import com.flickrmap.flickrmap.model.LongLatUtils;
-import com.flickrmap.flickrmap.model.TSPNearestNeighbour;
+import com.flickrmap.flickrmap.model.TSPNearestNeighbor1;
+import com.flickrmap.flickrmap.model.TSPNearestNeighbor2;
 import com.flickrmap.flickrmap.model.VolleyWrapper;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -432,7 +432,7 @@ public class PhotosMapFragment extends MapFragment implements
         }
 
         // a list of indexes in array positions[]
-        int path[] = new TSPNearestNeighbour().tsp(adjacencyMatrix);
+        int path[] = new TSPNearestNeighbor2().tspPath(adjacencyMatrix);
 
 
       /*  int[] colors =
@@ -450,7 +450,7 @@ public class PhotosMapFragment extends MapFragment implements
                 .color(getResources().getColor(R.color.flickr_blue));
 
         for (int i = 0; i < nodes; i++) {
-            mapPath = mapPath.add(positions.get(i));
+            mapPath = mapPath.add(positions.get(path[i]));
         }
         getMap().addPolyline(mapPath);
 

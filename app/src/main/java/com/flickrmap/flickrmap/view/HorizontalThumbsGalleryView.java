@@ -129,31 +129,34 @@ public class HorizontalThumbsGalleryView extends RecyclerView implements AppPhot
                 holder.itemView.setVisibility(INVISIBLE);
                 if (photo != null) {
                     // Retrieves an image specified by the URL, displays it in the UI.
-                    holder.mImageRequest = new ImageRequest(photo.getThumbnailUrl(),
-                                                            new Response.Listener<Bitmap>() {
+                    holder.mImageRequest =
+                            new ImageRequest(photo.getThumbnailUrl(),
+                                             new Response.Listener<Bitmap>() {
 
-                                                                @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-                                                                @Override
-                                                                public void onResponse(Bitmap bitmap) {
+                                                 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+                                                 @Override
+                                                 public void onResponse(Bitmap bitmap) {
 
-                                                                    holder.itemView.setVisibility(VISIBLE);
-                                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
-                                                                            holder.mImageView.isAttachedToWindow()) {
-                                                                        revealView(holder.itemView);
-                                                                    }
-                                                                    holder.mImageView.setImageBitmap(bitmap);
-                                                                }
+                                                     holder.itemView.setVisibility(VISIBLE);
+                                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
+                                                             holder.mImageView.isAttachedToWindow()) {
+                                                         revealView(holder.itemView);
+                                                     }
+                                                     holder.mImageView.setImageBitmap(bitmap);
+                                                 }
 
-                                                            }, 0, 0, ImageView.ScaleType.CENTER_CROP, null,
-                                                            new Response.ErrorListener() {
+                                             }, 0, 0, ImageView.ScaleType.CENTER_CROP, null,
+                                             new Response.ErrorListener() {
 
-                                                                public void onErrorResponse(VolleyError error) {
+                                                 public void onErrorResponse(VolleyError error) {
 
-                                                                    //TODO: handle the error properly
-                                                                    holder.mImageView.setImageBitmap(/*R.drawable.image_load_error*/
-                                                                                                     null);
-                                                                }
-                                                            });
+                                                     //TODO: handle the error properly
+                                                     holder.mImageView.setImageBitmap(/*R.drawable.image_load_error*/
+                                                                                      null);
+                                                 }
+                                             }
+                            );
+
                     // launch the request
                     VolleyWrapper.getInstance(getContext())
                             .addToRequestQueue(holder.mImageRequest);

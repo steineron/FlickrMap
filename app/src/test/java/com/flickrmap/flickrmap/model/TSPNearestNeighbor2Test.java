@@ -15,15 +15,15 @@ import static org.junit.Assert.assertTrue;
 
 @SmallTest
 @RunWith(MockitoJUnitRunner.class)
-public class TSPNearestNeighbourTest {
+public class TSPNearestNeighbor2Test {
 
-    private int[][] mGraph;
+    private double[][] mGraph;
 
-    private TSPNearestNeighbour mTSPNearestNeighbour;
+    private TSPPath mTSPPath;
 
     private boolean pathStartsAtZero(int[] path) {
 
-        return path != null && path[ 0 ] == 0;
+        return path != null && path[0] == 0;
     }
 
     // checks that the path is valid nad is a Hemiltonian path - traverses all vertices only once
@@ -31,22 +31,26 @@ public class TSPNearestNeighbourTest {
 
         boolean is = path != null;
         if (is) {
-            int visits[] = new int[ path.length ];
+            int visits[] = new int[path.length];
             try {
                 for (int i = 0; i < path.length; i++) {
-                    if (visits[ path[ i ] ] == 1) {
+                    if (visits[path[i]] == 1) {
+                        //path repeats a visit
                         is = false;
                         break;
                     }
-                    visits[ path[ i ] ] = 1;
+                    visits[path[i]] = 1;
                 }
-            } catch (IndexOutOfBoundsException e) {
+            }
+            catch (IndexOutOfBoundsException e) {
                 e.printStackTrace();
                 // any out -of -bounds exception means the path is not valid
                 is = false;
-            } finally {
+            }
+            finally {
+                // test that all nodes have been visited
                 for (int i = 0; i < visits.length; i++) {
-                    is = is && visits[ i ] == 1;
+                    is = is && visits[i] == 1;
                 }
             }
         }
@@ -56,7 +60,7 @@ public class TSPNearestNeighbourTest {
     @Before
     public void initTSP() {
 
-        mTSPNearestNeighbour = new TSPNearestNeighbour();
+        mTSPPath = new TSPNearestNeighbor2();
     }
 
     @Test
@@ -64,16 +68,16 @@ public class TSPNearestNeighbourTest {
 
         Random rand = new Random();
         int nodes = 100;
-        mGraph = new int[ nodes ][ nodes ];
+        mGraph = new double[nodes][nodes];
         for (int i = 0; i < nodes; i++) {
             for (int j = 0; j < nodes; j++) {
-                mGraph[ i ][ j ] = i == j ?
-                                   0 :
-                                   rand.nextInt(1000);
+                mGraph[i][j] = i == j ?
+                        0 :
+                        rand.nextDouble() * (1000);
             }
         }
         System.out.println(System.currentTimeMillis());
-        int[] result = mTSPNearestNeighbour.tsp(mGraph);
+        int[] result = mTSPPath.tspPath(mGraph);
         System.out.println(System.currentTimeMillis());
         System.out.println("\n");
         assertNotNull(result);
@@ -88,17 +92,17 @@ public class TSPNearestNeighbourTest {
 
         Random rand = new Random();
         int nodes = 100;
-        mGraph = new int[ nodes ][ nodes ];
+        mGraph = new double[nodes][nodes];
         for (int i = 0; i < nodes; i++) {
             for (int j = 0; j < nodes; j++) {
-                mGraph[ i ][ j ] = i == j ?
-                                   0 :
-                                   rand.nextInt(1000);
-                mGraph[ j ][ i ] = mGraph[ i ][ j ];
+                mGraph[i][j] = i == j ?
+                        0 :
+                        rand.nextDouble() * (1000);
+                mGraph[j][i] = mGraph[i][j];
             }
         }
         System.out.println(System.currentTimeMillis());
-        int[] result = mTSPNearestNeighbour.tsp(mGraph);
+        int[] result = mTSPPath.tspPath(mGraph);
         System.out.println("\n");
         System.out.println(System.currentTimeMillis());
         assertNotNull(result);
@@ -111,7 +115,7 @@ public class TSPNearestNeighbourTest {
     @Test
     public void test_known_TSP() throws Exception {
 
-        mGraph = new int[][]{
+        mGraph = new double[][]{
                 {0, 374, 200, 223, 108, 178, 252, 285, 240, 356},
                 {374, 0, 255, 166, 433, 199, 135, 95, 136, 17},
                 {200, 255, 0, 128, 277, 128, 180, 160, 131, 247},
@@ -125,20 +129,20 @@ public class TSPNearestNeighbourTest {
         };
 
 
-        int[] result = mTSPNearestNeighbour.tsp(mGraph);
+        int[] result = mTSPPath.tspPath(mGraph);
         assertNotNull(result);
         assertEquals(10, result.length);
         // should be0	4	2	3	8	7	9	1	6	5
-        assertEquals(result[ 0 ], 0);
-        assertEquals(result[ 1 ], 4);
-        assertEquals(result[ 2 ], 2);
-        assertEquals(result[ 3 ], 3);
-        assertEquals(result[ 4 ], 8);
-        assertEquals(result[ 5 ], 7);
-        assertEquals(result[ 6 ], 9);
-        assertEquals(result[ 7 ], 1);
-        assertEquals(result[ 8 ], 6);
-        assertEquals(result[ 9 ], 5);
+        assertEquals(result[0], 0);
+        assertEquals(result[1], 4);
+        assertEquals(result[2], 2);
+        assertEquals(result[3], 3);
+        assertEquals(result[4], 8);
+        assertEquals(result[5], 7);
+        assertEquals(result[6], 9);
+        assertEquals(result[7], 1);
+        assertEquals(result[8], 6);
+        assertEquals(result[9], 5);
         assertTrue(pathStartsAtZero(result));
         assertTrue(pathIsHemilton(result));
 
@@ -147,7 +151,7 @@ public class TSPNearestNeighbourTest {
     @Test
     public void test_ordered_TSP() throws Exception {
 
-        mGraph = new int[][]{
+        mGraph = new double[][]{
                 {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
                 {9, 0, 1, 2, 3, 4, 5, 6, 7, 8},
                 {8, 9, 0, 1, 2, 3, 4, 5, 6, 7},
@@ -161,7 +165,7 @@ public class TSPNearestNeighbourTest {
         };
 
 
-        int[] result = mTSPNearestNeighbour.tsp(mGraph);
+        int[] result = mTSPPath.tspPath(mGraph);
         assertNotNull(result);
         assertEquals(10, result.length);
         assertTrue(pathStartsAtZero(result));
@@ -169,7 +173,7 @@ public class TSPNearestNeighbourTest {
         // should be 0 1 2 3 4 5 6 7 8 9
         for (int i = 0; i < result.length; i++) {
 
-            assertEquals(result[ i ], i);
+            assertEquals(result[i], i);
         }
 
 
