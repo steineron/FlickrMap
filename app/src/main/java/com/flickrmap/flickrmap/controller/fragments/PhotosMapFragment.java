@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -25,7 +26,6 @@ import com.flickrmap.flickrmap.controller.AppPhotoDetails;
 import com.flickrmap.flickrmap.controller.ControllerIntents;
 import com.flickrmap.flickrmap.model.GetPhotosService;
 import com.flickrmap.flickrmap.model.LongLatUtils;
-import com.flickrmap.flickrmap.model.TSPNearestNeighbor1;
 import com.flickrmap.flickrmap.model.TSPNearestNeighbor2;
 import com.flickrmap.flickrmap.model.VolleyWrapper;
 import com.google.android.gms.common.ConnectionResult;
@@ -39,14 +39,13 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.googlecode.flickrjandroid.photos.GeoData;
 import com.googlecode.flickrjandroid.photos.Photo;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 
 import auto.parcel.AutoParcel;
@@ -85,6 +84,8 @@ public class PhotosMapFragment extends MapFragment implements
 
     // a receiver to handle requests to clear all photos from the map
     private BroadcastReceiver mClearAllPhotosReceiver;
+
+    private Polyline mPathPolyline;
 
 
     /**
@@ -355,16 +356,11 @@ public class PhotosMapFragment extends MapFragment implements
         int n = 0;
         final ArrayList<LatLng> positions = new ArrayList<>(); // the positions assigned on the map
 
-        // while on it - find the smallest latitude/ longitude values - use them later for TSP's adjacency matrix
-        double minLat = Double.MAX_VALUE;
-        double minLng = Double.MAX_VALUE;
-        double maxLat = Double.MIN_VALUE;
-        double maxLng = Double.MIN_VALUE;
-
         for (Photo photo : photos) {
             try {
                 GeoData geoData = photo.getGeoData();
                 LatLng position = new LatLng(geoData.getLatitude(), geoData.getLongitude());
+//                float hueStart = 211.0f; // flickr_blue converted to hsl
                 float hue = 331.0f; // flickr_pink converted to hsl
                 MarkerOptions makerOptions = new MarkerOptions()
                         .position(position)
@@ -381,37 +377,50 @@ public class PhotosMapFragment extends MapFragment implements
                 mAppPhotosMap.put(markerId, appPhotoDetails);
 
                 positions.add(position);
-                minLat = Math.min(position.latitude, minLat);
-                minLng = Math.min(position.longitude, minLng);
-                maxLat = Math.max(position.latitude, minLat);
-                maxLng = Math.max(position.longitude, minLng);
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+        AsyncTask.execute(new Runnable() {
 
-        //create teh adjacency matrix from the positions
-        int nodes = positions.size();
+            public void run() {
 
-        final LatLng startAt =
-                new LatLng(0.5 * (maxLat - minLat) + minLat, 0.5 * (maxLng - minLng) + minLng);
+                //create teh adjacency matrix from the positions
+                double[][] adjacencyMatrix = computeAdjacencyMatrix(positions);
 
-        Collections.sort(positions, new Comparator<LatLng>() {
+                // a list of indexes in array positions[]
+                int path[] = new TSPNearestNeighbor2().tspPath(adjacencyMatrix);
 
-            @Override
-            public int compare(final LatLng lhs, final LatLng rhs) {
+                PolylineOptions mapPath = new PolylineOptions().width(4.0f)
+                        .color(getResources().getColor(R.color.flickr_blue));
 
+                final int nodes = path.length;
+                for (int i = 0; i < nodes; i++) {
+                    mapPath = mapPath.add(positions.get(path[ i ]));
+                }
 
-                return LongLatUtils.calculateDistance(startAt, lhs) >
-                               LongLatUtils.calculateDistance(startAt, rhs) ?
-                       -1 :
-                       1;
+                final PolylineOptions result = mapPath;
+                // post it on the ui thread
+                getView().post(new Runnable() {
+
+                    @Override
+                    public void run() {
+
+                        mPathPolyline = getMap().addPolyline(result);
+                    }
+                });
+
             }
         });
 
-        double[][] adjacencyMatrix = new double[ nodes ][ nodes ];
 
+    }
+
+    private double[][] computeAdjacencyMatrix(final ArrayList<LatLng> positions) {
+
+        final int nodes = positions.size();
+        double[][] adjacencyMatrix = new double[ nodes ][ nodes ];
         double distance;
 
         for (int i = 0; i < nodes; i++) {
@@ -430,31 +439,7 @@ public class PhotosMapFragment extends MapFragment implements
             }
             System.out.print("\n");
         }
-
-        // a list of indexes in array positions[]
-        int path[] = new TSPNearestNeighbor2().tspPath(adjacencyMatrix);
-
-
-      /*  int[] colors =
-                new int[]{Color.BLACK, Color.RED, Color.GREEN, Color.BLUE, Color.DKGRAY, Color.MAGENTA};
-        for (int i = 1; i < nodes; i++) {
-            PolylineOptions mapPath = new PolylineOptions().width(4.0f)
-                    .color(colors[ (i - 1) % 6 ])
-                    .add(positions.get(i - 1))
-                    .add(positions.get(i));
-            getMap().addPolyline(mapPath);
-        }*/
-
-
-        PolylineOptions mapPath = new PolylineOptions().width(4.0f)
-                .color(getResources().getColor(R.color.flickr_blue));
-
-        for (int i = 0; i < nodes; i++) {
-            mapPath = mapPath.add(positions.get(path[i]));
-        }
-        getMap().addPolyline(mapPath);
-
-
+        return adjacencyMatrix;
     }
 
     private AppPhotoDetailsImpl createAppPhotoDetails(Marker marker, Photo photo) {
@@ -477,6 +462,8 @@ public class PhotosMapFragment extends MapFragment implements
                     marker.remove();
                 }
             }
+            mPathPolyline.remove();
+            getMap().clear(); //
             notifyMapPhotosCleared();
         }
     }

@@ -44,7 +44,8 @@ public class HorizontalThumbsGalleryView extends RecyclerView implements AppPhot
         super(context, attrs);
     }
 
-    public HorizontalThumbsGalleryView(final Context context, final AttributeSet attrs, final int defStyle) {
+    public HorizontalThumbsGalleryView(final Context context, final AttributeSet attrs,
+                                       final int defStyle) {
 
         super(context, attrs, defStyle);
     }
@@ -53,7 +54,9 @@ public class HorizontalThumbsGalleryView extends RecyclerView implements AppPhot
     @Override
     public void setAppPhotos(final Collection<? extends AppPhotoDetails> photos) {
 
-        mPhotosList = new ArrayList<>(photos);
+        mPhotosList = photos == null ?
+                      null :
+                      new ArrayList<>(photos);
         setAdapter(new PhotoGalleryAdapter());
     }
 
@@ -97,11 +100,12 @@ public class HorizontalThumbsGalleryView extends RecyclerView implements AppPhot
         @Override
         public GalleryViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
-            final GalleryViewHolder galleryViewHolder = new GalleryViewHolder(LayoutInflater.from(parent.getContext())
-                                                                                      .inflate(
-                                                                                              R.layout.gallery_thumb_view,
-                                                                                              parent,
-                                                                                              false));
+            final GalleryViewHolder galleryViewHolder =
+                    new GalleryViewHolder(LayoutInflater.from(parent.getContext())
+                            .inflate(
+                                    R.layout.gallery_thumb_view,
+                                    parent,
+                                    false));
             galleryViewHolder.mImageView.setOnClickListener(new OnClickListener() {
 
                 @Override
@@ -131,30 +135,31 @@ public class HorizontalThumbsGalleryView extends RecyclerView implements AppPhot
                     // Retrieves an image specified by the URL, displays it in the UI.
                     holder.mImageRequest =
                             new ImageRequest(photo.getThumbnailUrl(),
-                                             new Response.Listener<Bitmap>() {
+                                    new Response.Listener<Bitmap>() {
 
-                                                 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-                                                 @Override
-                                                 public void onResponse(Bitmap bitmap) {
+                                        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+                                        @Override
+                                        public void onResponse(Bitmap bitmap) {
 
-                                                     holder.itemView.setVisibility(VISIBLE);
-                                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
-                                                             holder.mImageView.isAttachedToWindow()) {
-                                                         revealView(holder.itemView);
-                                                     }
-                                                     holder.mImageView.setImageBitmap(bitmap);
-                                                 }
+                                            holder.itemView.setVisibility(VISIBLE);
+                                            if (Build.VERSION.SDK_INT >=
+                                                    Build.VERSION_CODES.LOLLIPOP &&
+                                                    holder.mImageView.isAttachedToWindow()) {
+                                                revealView(holder.itemView);
+                                            }
+                                            holder.mImageView.setImageBitmap(bitmap);
+                                        }
 
-                                             }, 0, 0, ImageView.ScaleType.CENTER_CROP, null,
-                                             new Response.ErrorListener() {
+                                    }, 0, 0, ImageView.ScaleType.CENTER_CROP, null,
+                                    new Response.ErrorListener() {
 
-                                                 public void onErrorResponse(VolleyError error) {
+                                        public void onErrorResponse(VolleyError error) {
 
-                                                     //TODO: handle the error properly
-                                                     holder.mImageView.setImageBitmap(/*R.drawable.image_load_error*/
-                                                                                      null);
-                                                 }
-                                             }
+                                            //TODO: handle the error properly
+                                            holder.mImageView.setImageBitmap(/*R.drawable.image_load_error*/
+                                                    null);
+                                        }
+                                    }
                             );
 
                     // launch the request
@@ -162,8 +167,7 @@ public class HorizontalThumbsGalleryView extends RecyclerView implements AppPhot
                             .addToRequestQueue(holder.mImageRequest);
 
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
 
             }
             AppPhotoDetails photo = null;
@@ -183,8 +187,8 @@ public class HorizontalThumbsGalleryView extends RecyclerView implements AppPhot
         public int getItemCount() {
 
             return mPhotosList == null ?
-                    0 :
-                    mPhotosList.size();
+                   0 :
+                   mPhotosList.size();
         }
 
     }
@@ -208,7 +212,7 @@ public class HorizontalThumbsGalleryView extends RecyclerView implements AppPhot
                     radius);                     // radius of the final mask
             reveal.setDuration(150L)
                     .setInterpolator(AnimationUtils.loadInterpolator(getContext(),
-                                                                     android.R.interpolator.linear_out_slow_in));
+                            android.R.interpolator.linear_out_slow_in));
             reveal.start();
         }
     }
