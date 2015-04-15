@@ -2,7 +2,7 @@
     <string name="app_name">FlickrMap</string>
     <string name="action_settings">Settings</string>
     <string name="action_clear">Clear</string>
-    <string name="feedback_marker_cleared">Cleared. Tap \'Current Location\' botton to retrieve images again.</string>
+    <string name="feedback_marker_cleared">Cleared. Tap \'Current Location\' button to retrieve images again.</string>
     <string name="error_photos_retrieve">Oops... could not get your images</string>
     <string name="error_connecting_api_client">Oops... there\'s a problem with the map at the moment</string>
 
