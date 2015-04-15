@@ -10,15 +10,15 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.flickrmap.flickrmap.R;
-import com.flickrmap.flickrmap.controller.AppPhotoDetails;
 import com.flickrmap.flickrmap.controller.ControllerIntents;
+import com.flickrmap.flickrmap.view.AppPhotoDetails;
 import com.flickrmap.flickrmap.view.AppPhotosGallery;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
 /**
- * A  {@link Fragment} subclass that display a list of images in a horizontal gallery.
+ * A  {@link Fragment} subclass that display a list of images in a gallery.
  * interaction events broadcast a.
  * Use the {@link PhotoGalleryFragment#newInstance} factory method to
  * create an instance of this fragment.
@@ -37,7 +37,7 @@ public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @param photos - an array list of {@link com.flickrmap.flickrmap.controller.AppPhotoDetails} that owns the details about the photos this gallery fragment displays
+     * @param photos - an array list of {@link com.flickrmap.flickrmap.view.AppPhotoDetails} that owns the details about the photos this gallery fragment displays
      * @return A new instance of fragment PhotoGalleryFragment.
      */
     public static PhotoGalleryFragment newInstance(Collection<AppPhotoDetails> photos) {

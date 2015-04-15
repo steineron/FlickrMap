@@ -22,12 +22,12 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageRequest;
 import com.flickrmap.flickrmap.FlickrMapIntents;
 import com.flickrmap.flickrmap.R;
-import com.flickrmap.flickrmap.controller.AppPhotoDetails;
 import com.flickrmap.flickrmap.controller.ControllerIntents;
 import com.flickrmap.flickrmap.model.GetPhotosService;
 import com.flickrmap.flickrmap.model.LongLatUtils;
-import com.flickrmap.flickrmap.model.TSPNearestNeighbor2;
+import com.flickrmap.flickrmap.model.TSPNearestNeighbor;
 import com.flickrmap.flickrmap.model.VolleyWrapper;
+import com.flickrmap.flickrmap.view.AppPhotoDetails;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -51,6 +51,11 @@ import java.util.HashMap;
 import auto.parcel.AutoParcel;
 
 /**
+ * the map fragment that displays the markers of the images.
+ * for every marker that is successfully displayed it generates an instance of {@link com.flickrmap.flickrmap.view.AppPhotoDetails}
+ * <p/>
+ * the fragment notifies when it was done displaying he markers and when it removed them from the display
+ * <p/>
  * Created by ron on 4/11/15.
  */
 public class PhotosMapFragment extends MapFragment implements
@@ -74,18 +79,23 @@ public class PhotosMapFragment extends MapFragment implements
 
     private GoogleApiClient mGoogleApiClient;
 
+    // a map fro a marker's id to it's photo-details implementation.
     private HashMap<String, AppPhotoDetailsImpl> mAppPhotosMap;
 
-    // a receiver to handle result of get photos
+    // a receiver to handle result of get photos.
     private BroadcastReceiver mPhotosResultsReceiver;
 
-    // a receiver to handle requests to display a photo on the map
+    // a receiver to handle requests to display a photo on the map.
     private BroadcastReceiver mDisplayAppPhotoReceiver;
 
-    // a receiver to handle requests to clear all photos from the map
+    // a receiver to handle requests to clear all photos from the map.
     private BroadcastReceiver mClearAllPhotosReceiver;
 
+    // the polyline (path) on the map.
     private Polyline mPathPolyline;
+
+    // the marker currently displaying the info window.
+    private Marker mDisplayedMarker;
 
 
     /**
@@ -100,7 +110,9 @@ public class PhotosMapFragment extends MapFragment implements
         void onMapPhotosCleared(Context context);
     }
 
-
+    /**
+     * OnMapPhotosChangeReceiver - a private implementation of a {@link android.content.BroadcastReceiver} that can intercept notifications about changes in the map's photos
+     */
     private abstract static class OnMapPhotosChangeReceiver extends BroadcastReceiver implements OnMapPhotosChangeListener {
 
         @Override
@@ -122,6 +134,8 @@ public class PhotosMapFragment extends MapFragment implements
             }
         }
     }
+
+    // register a listener to changes in hte map's photos
 
     public static BroadcastReceiver registerOnMapPhotosChangeListener(final Context context,
                                                                       final OnMapPhotosChangeListener listener) {
@@ -187,7 +201,7 @@ public class PhotosMapFragment extends MapFragment implements
         mDisplayAppPhotoReceiver =
                 ControllerIntents.registerDisplayAppPhotosListener(context, this);
 
-        //register a listener to handle requests to clear all photos on the map
+        //register a listener to handle requests to clear all photos from the map
         mClearAllPhotosReceiver =
                 ControllerIntents.registerClearAllPhotosListener(context, this);
 
@@ -235,7 +249,7 @@ public class PhotosMapFragment extends MapFragment implements
     public void onConnected(Bundle bundle) {
         // hte google api client is connected - get current location and zoom to it
         zoomToLocation(getCurrentLocation());
-        // now retrieve phot's details for this location
+        // now retrieve photo's details for this location
         retrievePhotosForLocation(getCurrentLocation());
     }
 
@@ -268,7 +282,7 @@ public class PhotosMapFragment extends MapFragment implements
     public void onPhotosResult(Context context, ArrayList<Photo> photos) {
 
         populatePhotosOnMap(photos);
-        notifyPhotosAddedToMap();
+        notifyMapPhotosAdded();
     }
 
     @Override
@@ -285,7 +299,12 @@ public class PhotosMapFragment extends MapFragment implements
     public void onDisplayAppPhoto(final Context context,
                                   final Collection<AppPhotoDetails> photosDetails) {
 
+        if (mDisplayedMarker != null) {
+            mDisplayedMarker.remove();
+            mDisplayedMarker = null;
+        }
         if (photosDetails != null && mAppPhotosMap != null) {
+            // show info window for any image in he collection
             for (AppPhotoDetails photoDetails : photosDetails) {
 
                 AppPhotoDetailsImpl detailsImpl =
@@ -294,6 +313,7 @@ public class PhotosMapFragment extends MapFragment implements
                 if (mapMarker != null) {
                     mapMarker.showInfoWindow();
                     zoomToLocation(mapMarker.getPosition());
+                    mDisplayedMarker = mapMarker;
                 }
             }
         }
@@ -387,10 +407,10 @@ public class PhotosMapFragment extends MapFragment implements
             public void run() {
 
                 //create teh adjacency matrix from the positions
-                double[][] adjacencyMatrix = computeAdjacencyMatrix(positions);
 
                 // a list of indexes in array positions[]
-                int path[] = new TSPNearestNeighbor2().tspPath(adjacencyMatrix);
+                int path[] = new TSPNearestNeighbor()
+                        .tspPath(computeAdjacencyMatrix(positions));
 
                 PolylineOptions mapPath = new PolylineOptions().width(4.0f)
                         .color(getResources().getColor(R.color.flickr_blue));
@@ -466,10 +486,11 @@ public class PhotosMapFragment extends MapFragment implements
             getMap().clear(); //
             notifyMapPhotosCleared();
         }
+        mDisplayedMarker = null;
     }
 
 
-    private void notifyPhotosAddedToMap() {
+    private void notifyMapPhotosAdded() {
 
         FlickrMapIntents.Builder builder = new FlickrMapIntents.Builder(getActivity())
                 .withAppPhotos(mAppPhotosMap.values());
@@ -483,7 +504,7 @@ public class PhotosMapFragment extends MapFragment implements
     }
 
     /**
-     * {@link AppPhotoDetailsImpl} - an internal implementation for the {@link com.flickrmap.flickrmap.controller.AppPhotoDetails} interface
+     * {@link AppPhotoDetailsImpl} - an internal implementation for the {@link com.flickrmap.flickrmap.view.AppPhotoDetails} interface
      * the current activity creates and manages instances of this class.
      * <p/>
      * each instance is coupled to a maker on the map and mapped using {@link com.google.android.gms.maps.model.Marker :getId}.

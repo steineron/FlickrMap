@@ -10,6 +10,7 @@ import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.Volley;
 
 /**
+ * Wrapper for Google's Volley lib
  * Created by ron on 4/10/15.
  */
 public class VolleyWrapper {

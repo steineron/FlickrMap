@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.os.Build;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -19,7 +20,6 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageRequest;
 import com.flickrmap.flickrmap.R;
-import com.flickrmap.flickrmap.controller.AppPhotoDetails;
 import com.flickrmap.flickrmap.model.VolleyWrapper;
 
 import java.util.ArrayList;
@@ -215,5 +215,38 @@ public class HorizontalThumbsGalleryView extends RecyclerView implements AppPhot
                             android.R.interpolator.linear_out_slow_in));
             reveal.start();
         }
+    }
+
+    /**
+     * Created by ron on 4/10/15.
+     */
+    public static class HorizontalSpaceDecorator extends ItemDecoration {
+
+        private int space;
+
+        /**
+         * @param space - HALF the space to use when decorating the offsets.
+         */
+        public HorizontalSpaceDecorator(int space) {
+
+            this.space = space;
+        }
+
+        @Override
+        public void getItemOffsets(Rect outRect, View view, RecyclerView parent,
+                                   State state) {
+            // Add left margin only for the first item to avoid double space between items
+            outRect.left = parent.getChildPosition(view) == 0 ?
+                           2 * space :
+                           space;
+            // Add right margin only for the last item to avoid double space between items
+            outRect.right = parent.getChildPosition(view) == parent.getChildCount() - 1 ?
+                            2 * space :
+                            space;
+            outRect.bottom = 2 * space;
+
+            outRect.top = 2 * space;
+        }
+
     }
 }

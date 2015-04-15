@@ -3,19 +3,18 @@ package com.flickrmap.flickrmap.model;
 /**
  * taken from /**
  * Copied from http://www.sanfoundry.com/java-program-implement-traveling-salesman-problem-using-nearest-neighbour-algorithm/
- *
+ * <p/>
  * https://code.google.com/p/tspPath-ikm-java/source/browse/trunk/TSP/src/NearestNeighbor.java?r=3
- *
  */
 
-public class TSPNearestNeighbor2 implements TSPPath {
+public class TSPNearestNeighbor implements TSPPath {
 
     @Override
     public int[] tspPath(final double[][] adjacencyMatrix) {
 
-        int[] path = new int[adjacencyMatrix[0].length];
+        int[] path = new int[ adjacencyMatrix[ 0 ].length ];
 
-        path[0] = 0;
+        path[ 0 ] = 0;
         int currentNode = 0;
 
         /**
@@ -24,11 +23,11 @@ public class TSPNearestNeighbor2 implements TSPPath {
         int i = 1;
         while (i < path.length) {
             // find next node
-            int nextNode = findMin(adjacencyMatrix[currentNode], path);
+            int nextNode = findMin(adjacencyMatrix[ currentNode ], path);
             // if the node is not -1 (meaning if there is a node to be visited
             if (nextNode != -1) {
                 // add the node to the path
-                path[i] = nextNode;
+                path[ i ] = nextNode;
                 // update currentNode and i
                 currentNode = nextNode;
                 i++;
@@ -50,8 +49,8 @@ public class TSPNearestNeighbor2 implements TSPPath {
         double min = Double.MAX_VALUE;
 
         while (i < row.length) {
-            if (isNodeInPath(path, i) == false && row[i] < min) {
-                min = row[i];
+            if (isNodeInPath(path, i) == false && row[ i ] < min) {
+                min = row[ i ];
                 nextNode = i;
             }
             i++;
@@ -68,7 +67,7 @@ public class TSPNearestNeighbor2 implements TSPPath {
     public boolean isNodeInPath(int[] path, int node) {
 
         for (int i = 0; i < path.length; i++) {
-            if (path[i] == node) {
+            if (path[ i ] == node) {
                 return true;
             }
         }

@@ -1,4 +1,4 @@
-package com.flickrmap.flickrmap.controller;
+package com.flickrmap.flickrmap.view;
 
 import android.os.Parcelable;
 import android.support.annotation.Nullable;

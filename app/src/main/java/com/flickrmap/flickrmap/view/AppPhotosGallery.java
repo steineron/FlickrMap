@@ -1,7 +1,5 @@
 package com.flickrmap.flickrmap.view;
 
-import com.flickrmap.flickrmap.controller.AppPhotoDetails;
-
 import java.util.Collection;
 
 /**

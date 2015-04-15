@@ -8,10 +8,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.flickrmap.flickrmap.R;
-import com.flickrmap.flickrmap.controller.AppPhotoDetails;
 import com.flickrmap.flickrmap.controller.ControllerIntents;
 import com.flickrmap.flickrmap.controller.fragments.PhotoGalleryFragment;
 import com.flickrmap.flickrmap.controller.fragments.PhotosMapFragment;
+import com.flickrmap.flickrmap.view.AppPhotoDetails;
 import com.google.android.gms.maps.MapFragment;
 
 import java.util.Collection;
@@ -89,9 +89,9 @@ public class MainActivity extends Activity implements
             getFragmentManager().beginTransaction()
                     .add(R.id.container, mPhotoGalleryFragment)
                     .setCustomAnimations(R.anim.fragment_enter, // enter
-                                         R.anim.fragment_exit, // exit
-                                         R.anim.fragment_enter, // pop-enter
-                                         R.anim.fragment_exit) // pop-exit
+                            R.anim.fragment_exit, // exit
+                            R.anim.fragment_enter, // pop-enter
+                            R.anim.fragment_exit) // pop-exit
                     .commit();
         }
     }
@@ -118,9 +118,9 @@ public class MainActivity extends Activity implements
             getFragmentManager().beginTransaction()
                     .remove(mPhotoGalleryFragment)
                     .setCustomAnimations(R.anim.fragment_enter, // enter
-                                         R.anim.fragment_exit, // exit
-                                         R.anim.fragment_enter, // pop-enter
-                                         R.anim.fragment_exit) // pop-exit
+                            R.anim.fragment_exit, // exit
+                            R.anim.fragment_enter, // pop-enter
+                            R.anim.fragment_exit) // pop-exit
                     .commit();
             mPhotoGalleryFragment = null;
         }

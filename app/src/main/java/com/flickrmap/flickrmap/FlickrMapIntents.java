@@ -5,15 +5,15 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
 
-import com.flickrmap.flickrmap.controller.AppPhotoDetails;
 import com.flickrmap.flickrmap.controller.ControllerIntents;
+import com.flickrmap.flickrmap.view.AppPhotoDetails;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
 /**
  * the basic need is to encapsulate details of photos -
- * a collection of {@link com.flickrmap.flickrmap.controller.AppPhotoDetails} inside an {@link android.content.Intent}
+ * a collection of {@link com.flickrmap.flickrmap.view.AppPhotoDetails} inside an {@link android.content.Intent}
  * and be able to extract that collection from such Intent's extras {@link android.os.Bundle}
  * the {@link com.flickrmap.flickrmap.FlickrMapIntents.Builder} and {@link com.flickrmap.flickrmap.FlickrMapIntents.Parser}
  * classes do exactly that.

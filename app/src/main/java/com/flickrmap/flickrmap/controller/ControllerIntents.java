@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 
 import com.flickrmap.flickrmap.FlickrMapIntents;
+import com.flickrmap.flickrmap.view.AppPhotoDetails;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,7 +14,7 @@ import java.util.List;
 
 /**
  * this class, are used in the controller to communicate events and actions using
- * intents with {@link com.flickrmap.flickrmap.controller.AppPhotoDetails}
+ * intents with {@link com.flickrmap.flickrmap.view.AppPhotoDetails}
  * <p/>
  * Created by ron on 4/11/15.
  */
@@ -85,7 +86,7 @@ public final class ControllerIntents {
 
 
     /**
-     * Clear all photo:
+     * Clear all photos:
      */
 
     public static final String ACTION_CLEAR_ALL = TAG + ".ACTION_CLEAR_ALL";
