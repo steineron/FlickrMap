@@ -2,10 +2,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
              android:layout_width="@dimen/gallery_thumb_size"
              android:layout_height="@dimen/gallery_thumb_size"
-             android:padding="@dimen/gallery_thumb_padding"
              android:focusable="true"
              android:clickable="true"
-             android:background="@color/gallery_thumb_background"
     >
 
     <ImageView
@@ -17,6 +15,18 @@
         android:focusable="true"
         android:clickable="true"
         android:elevation="8dp"
+        android:padding="@dimen/gallery_thumb_padding"
         >
     </ImageView>
+    <ImageView
+        android:id="@+id/thumb_frame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:focusable="false"
+        android:clickable="false"
+        android:elevation="8dp"
+        android:src="@drawable/image_frame"
+        >
+    </ImageView>
+
 </FrameLayout>

@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
+import android.widget.Button;
 import android.widget.ImageView;
 
 import com.android.volley.Response;
@@ -137,6 +138,7 @@ public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.
 
         protected final ImageView mImageView;
 
+
         protected ImageRequest mImageRequest;
 
         public GalleryViewHolder(View itemView) {
@@ -151,11 +153,22 @@ public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.
         @Override
         public GalleryViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
-            return new GalleryViewHolder(LayoutInflater.from(parent.getContext())
-                    .inflate(
-                            R.layout.gallery_thumb_view,
-                            parent,
-                            false));
+            final GalleryViewHolder galleryViewHolder = new GalleryViewHolder(LayoutInflater.from(parent.getContext())
+                                                                                .inflate(
+                                                                                        R.layout.gallery_thumb_view,
+                                                                                        parent,
+                                                                                        false));
+            galleryViewHolder.mImageView.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(final View v) {
+
+                    AppPhotoDetails photo = mPhotosList.get(galleryViewHolder.getAdapterPosition());
+                    getActivity().sendBroadcast(ControllerIntents
+                                                        .createDisplayAppPhotoIntent(getActivity(), photo));
+                }
+            });
+            return galleryViewHolder;
         }
 
         @Override
@@ -169,43 +182,37 @@ public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.
                 if (photo != null) {
                     // Retrieves an image specified by the URL, displays it in the UI.
                     holder.mImageRequest = new ImageRequest(photo.getThumbnailUrl(),
-                            new Response.Listener<Bitmap>() {
+                                                            new Response.Listener<Bitmap>() {
 
-                                @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-                                @Override
-                                public void onResponse(Bitmap bitmap) {
+                                                                @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+                                                                @Override
+                                                                public void onResponse(Bitmap bitmap) {
 
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
-                                            holder.mImageView.isAttachedToWindow()) {
-                                        revealView(holder.mImageView);
-                                    }
-                                    holder.mImageView.setImageBitmap(bitmap);
-                                    holder.mImageView.setVisibility(View.VISIBLE);
-                                }
+                                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
+                                                                            holder.mImageView.isAttachedToWindow()) {
+                                                                        revealView(holder.itemView);
+                                                                    }
+                                                                    holder.mImageView.setImageBitmap(bitmap);
+                                                                    holder.mImageView.setVisibility(View.VISIBLE);
+                                                                }
 
-                            }, 0, 0, ImageView.ScaleType.CENTER_CROP, null,
-                            new Response.ErrorListener() {
+                                                            }, 0, 0, ImageView.ScaleType.CENTER_CROP, null,
+                                                            new Response.ErrorListener() {
 
-                                public void onErrorResponse(VolleyError error) {
+                                                                public void onErrorResponse(VolleyError error) {
 
-                                    //TODO: handle the error properly
-                                    holder.mImageView.setImageBitmap(/*R.drawable.image_load_error*/ null);
-                                }
-                            });
+                                                                    //TODO: handle the error properly
+                                                                    holder.mImageView.setImageBitmap(/*R.drawable.image_load_error*/
+                                                                                                     null);
+                                                                }
+                                                            });
                     // launch the request
                     VolleyWrapper.getInstance(getActivity())
                             .addToRequestQueue(holder.mImageRequest);
-                    holder.mImageView.setOnClickListener(new View.OnClickListener() {
 
-                        @Override
-                        public void onClick(final View v) {
-
-                            getActivity().sendBroadcast(ControllerIntents
-                                    .createDisplayAppPhotoIntent(getActivity(), photo));
-                        }
-                    });
                 }
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
 
             }
             AppPhotoDetails photo = null;
@@ -224,8 +231,8 @@ public class PhotoGalleryFragment extends Fragment implements PhotosMapFragment.
         public int getItemCount() {
 
             return mPhotosList == null ?
-                   0 :
-                   mPhotosList.size();
+                    0 :
+                    mPhotosList.size();
         }
 
     }
