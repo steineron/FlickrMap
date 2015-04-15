@@ -1,9 +1,9 @@
 package com.flickrmap.flickrmap.controller.activities;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -20,7 +20,7 @@ import java.util.Collection;
  * the main activity is mainly responsible for loading the map fragment and handling of the thumbs fragment
  * it also listens to changes in the map fragment and manipulated the gallery fragment as needed
  */
-public class MainActivity extends ActionBarActivity implements
+public class MainActivity extends Activity implements
                                                     PhotosMapFragment.OnMapPhotosChangeListener {
 
     private MapFragment mMapFragment;

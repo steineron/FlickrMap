@@ -19,7 +19,7 @@
         android:layout_width="match_parent"
         android:maxWidth="@dimen/info_window_image_size"
         android:layout_height="wrap_content"
-        android:textAppearance="?textAppearanceListItemSmall"
+        android:textAppearance="?android:textAppearanceListItemSmall"
         />
 
 </LinearLayout>

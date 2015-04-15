@@ -5,6 +5,7 @@
              android:padding="@dimen/gallery_thumb_padding"
              android:focusable="true"
              android:clickable="true"
+             android:background="@color/gallery_thumb_background"
     >
 
     <ImageView

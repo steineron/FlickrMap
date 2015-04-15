@@ -35,6 +35,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -364,8 +365,10 @@ public class PhotosMapFragment extends MapFragment implements
             try {
                 GeoData geoData = photo.getGeoData();
                 LatLng position = new LatLng(geoData.getLatitude(), geoData.getLongitude());
+                float hue = 331.0f; // flickr_pink converted to hsl
                 MarkerOptions makerOptions = new MarkerOptions()
-                        .position(position);
+                        .position(position)
+                        .icon(BitmapDescriptorFactory.defaultMarker(hue));
                 Marker marker = getMap()
                         .addMarker(makerOptions);
 
@@ -444,7 +447,7 @@ public class PhotosMapFragment extends MapFragment implements
 
 
         PolylineOptions mapPath = new PolylineOptions().width(4.0f)
-                .color(Color.BLUE);
+                .color(getResources().getColor(R.color.flickr_blue));
 
         for (int i = 0; i < nodes; i++) {
             mapPath = mapPath.add(positions.get(i));
